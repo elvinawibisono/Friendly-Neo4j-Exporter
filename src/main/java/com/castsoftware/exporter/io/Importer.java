@@ -58,10 +58,10 @@ public class Importer {
     private Long relationshipCreated;
 
     // Binding map between csv ID and Neo4j created nodes. Only the Node id is stored here, to limit the usage of heap memory.
-    private Map<Long, Long> idBindingMap;
+    private final Map<Long, Long> idBindingMap;
 
-    private GraphDatabaseService db;
-    private Log log;
+    private final GraphDatabaseService db;
+    private final Log log;
     private Transaction tx;
 
     /**

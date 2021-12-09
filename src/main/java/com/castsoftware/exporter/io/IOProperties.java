@@ -34,7 +34,7 @@ public class IOProperties {
         PREFIX_NODE_FILE("io.file.prefix.node"),
         PREFIX_RELATIONSHIP_FILE("io.file.prefix.relationship");
 
-        private String label;
+        private final String label;
 
         @Override
         public String toString() {

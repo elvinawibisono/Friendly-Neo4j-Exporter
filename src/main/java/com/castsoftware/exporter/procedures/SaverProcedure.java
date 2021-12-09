@@ -1,15 +1,20 @@
 package com.castsoftware.exporter.procedures;
 
+import com.castsoftware.exporter.database.Neo4jAl;
 import com.castsoftware.exporter.exceptions.ProcedureException;
+import com.castsoftware.exporter.exceptions.file.FileIOException;
 import com.castsoftware.exporter.io.Exporter;
+import com.castsoftware.exporter.io.NewExporter;
 import com.castsoftware.exporter.results.OutputMessage;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -20,6 +25,9 @@ public class SaverProcedure {
 
     @Context
     public Log log;
+
+    @Context
+    public Transaction transaction;
 
     /**
      * Neo4 Procedure entry point for "fexporter.save()". See Neo4j documentation for more information.
@@ -39,10 +47,17 @@ public class SaverProcedure {
      public Stream<OutputMessage> saveProcedure(@Name(value = "LabelsToSave") List<String> labelList,
                                                 @Name(value = "Path") String path,
                                                 @Name(value = "ZipFileName",defaultValue="export") String zipFileName,
-                                                @Name(value = "SaveRelationship", defaultValue="true") Boolean saveRelationShip,
-                                                @Name(value = "ConsiderNeighbors", defaultValue="false") Boolean considerNeighbors) throws ProcedureException{
-         Exporter exporter = new Exporter(db, log);
-         return exporter.save(labelList, path, zipFileName, saveRelationShip, considerNeighbors);
+                                                @Name(value = "Delimiter", defaultValue=";") String delimiter
+                                                ) throws ProcedureException{
+         try {
+             Neo4jAl neo4jAl = new Neo4jAl(db, transaction, log);
+             NewExporter exporter = new NewExporter(neo4jAl, delimiter);
+             Path output = exporter.export(path, zipFileName, labelList);
+             return Stream.of(new OutputMessage(String.format("A new zip file has been created under '%s'.", output.toString())));
+         } catch (Exception | FileIOException e) {
+             log.error("Failed to export the list of nodes.", e);
+             throw new ProcedureException("Failed to export the list of node. Check Neo4J logs for more details...", e);
+         }
      }
 
      public SaverProcedure() { } // Neo4J POJO **/

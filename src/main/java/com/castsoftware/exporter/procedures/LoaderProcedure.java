@@ -30,8 +30,13 @@ public class LoaderProcedure {
      "") **/
      @Procedure(value = "fexporter.load", mode = Mode.WRITE)
      public Stream<OutputMessage> loadProcedure(@Name(value = "PathToZipFileName") String pathToZipFileName) throws ProcedureException {
+         try {
          Importer importer = new Importer(db, log);
          return importer.load(pathToZipFileName);
+         } catch (Exception e) {
+            log.error("Failed to import the list of nodes.", e);
+            throw new ProcedureException("Failed to import the list of node. Check Neo4J logs for more details...", e);
+        }
      }
 
     /**

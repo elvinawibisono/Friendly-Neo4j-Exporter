@@ -1,32 +1,45 @@
 /*
- *  Friendly exporter for Neo4j - Copyright (C) 2020  Hugo JOBY
+ * Copyright (C) 2020  Hugo JOBY
  *
- *      This library is free software; you can redistribute it and/or modify it under the terms
- *      of the GNU Lesser General Public License as published by the Free Software Foundation;
- *      either version 2.1 of the License, or (at your option) any later version.
- *      This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- *      without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *      See the GNU Lesser General Public License for more details.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
  *
- *      You should have received a copy of the GNU Lesser General Public License along with this library;
- *      If not, see <https://www.gnu.org/licenses/>.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License v3 for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public v3
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
  */
 
 package com.castsoftware.exporter.exceptions.neo4j;
 
-import com.castsoftware.exporter.exceptions.ExporterException;
 
-public class Neo4jQueryException extends ExporterException {
+import com.castsoftware.exporter.exceptions.ProcedureException;
 
-    private static final long serialVersionUID = 8087192855448474860L;
-    private static final String messagePrefix = "Error during Neo4j query : ";
-    private static final String codePrefix = "NEO_BR_";
+/**
+ * The <code>Neo4jQueryException</code> is thrown when a request produce an exception during its
+ * execution. Neo4jQueryException
+ */
+public class Neo4jQueryException extends ProcedureException {
 
-    public Neo4jQueryException(String request, Throwable cause, String code) {
-        super(messagePrefix.concat(request), cause, codePrefix.concat(code));
-    }
+  private static final long serialVersionUID = 8087192855448474860L;
+  private static final String MESSAGE_PREFIX = "Error during Neo4j query : ";
+  private static final String CODE_PREFIX = "NEO_BR_";
 
-    public Neo4jQueryException(String request, String query, Throwable cause, String code) {
-        super(messagePrefix.concat(request).concat(" . Query : ").concat(query), cause, codePrefix.concat(code));
-    }
+  public Neo4jQueryException(String request, Throwable cause, String code) {
+    super(MESSAGE_PREFIX.concat(request), cause, CODE_PREFIX.concat(code));
+  }
+
+  public Neo4jQueryException(String request, String query, Throwable cause, String code) {
+    super(
+        MESSAGE_PREFIX.concat(request).concat(" . Query : ").concat(query),
+        cause,
+        CODE_PREFIX.concat(code));
+  }
 }

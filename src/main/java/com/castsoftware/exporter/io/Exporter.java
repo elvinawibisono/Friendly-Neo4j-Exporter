@@ -14,6 +14,7 @@
 
 package com.castsoftware.exporter.io;
 
+import com.castsoftware.exporter.database.Neo4jAl;
 import com.castsoftware.exporter.exceptions.ProcedureException;
 import com.castsoftware.exporter.exceptions.file.FileIOException;
 import com.castsoftware.exporter.exceptions.neo4j.Neo4jNoResult;
@@ -33,7 +34,7 @@ import java.util.zip.ZipOutputStream;
 public class Exporter {
 
     // Return message queue
-    private static final List<OutputMessage> MESSAGE_QUEUE = new ArrayList<>();
+    private static final List<String> MESSAGE_QUEUE = new ArrayList<>();
 
     // Default properties
     private static final String DELIMITER = IOProperties.Property.CSV_DELIMITER.toString(); // ; | , | space
@@ -44,9 +45,8 @@ public class Exporter {
     private static final String RELATIONSHIP_PREFIX = IOProperties.Property.PREFIX_RELATIONSHIP_FILE.toString(); // relationship
     private static final String NODE_PREFIX = IOProperties.Property.PREFIX_NODE_FILE.toString(); // node
 
-    private GraphDatabaseService db;
-    private Log log;
-    private Transaction tx;
+    private final Neo4jAl neo4jAl;
+    private final String delimiter;
 
     // Parameters
     private Boolean saveRelationshipParams = false;
@@ -54,10 +54,10 @@ public class Exporter {
     private String pathParams = null;
 
     // Class members
-    private Set<Long> nodeLabelMap; // List of node Id visited
-    private Set<Label> closedLabelSet; // Already visited Node labels
+    private final Set<Long> nodeLabelMap; // List of node Id visited
+    private final Set<Label> closedLabelSet; // Already visited Node labels
     private List<Label> openLabelList = null; // To visit Node labels
-    private Set<String> createdFilenameList; // Filename created during this session
+    private final Set<String> createdFilenameList; // Filename created during this session
 
     /**
      * Save relationship between found nodes.
@@ -77,7 +77,7 @@ public class Exporter {
             // Parse all relationships, extract headers for each relations
             for (Long index : nodeLabelMap) {
 
-                Node node = this.tx.getNodeById(index);
+                Node node = this.neo4jAl.getNodeById(index);
 
                 for (Relationship rel : node.getRelationships(Direction.OUTGOING)) {
                     Node otherNode = rel.getOtherNode(node);
@@ -117,7 +117,7 @@ public class Exporter {
 
                     writer.write(headers.toString());
                 } catch (IOException e) {
-                    log.error("Error : Impossible to create/open file with name ".concat(filename), e);
+                    this.neo4jAl.error("Error : Impossible to create/open file with name ".concat(filename), e);
                 }
             }
 
@@ -126,7 +126,6 @@ public class Exporter {
                 String name = rel.getType().name();
 
                 Set<String> headers = relationshipsHeaders.get(name);
-                StringBuilder values = new StringBuilder();
 
                 List<String> valueList = new ArrayList<>();
                 // Append Source and destination nodes ID
@@ -148,7 +147,7 @@ public class Exporter {
                 fileWriterMap.get(name).write(String.join(DELIMITER, valueList).concat("\n"));
             }
 
-        } catch (IOException rethrown ) {
+        } catch (IOException | Neo4jQueryException rethrown ) {
             throw new FileIOException("Error while saving relationships", rethrown, "SAVExSARE01");
         } finally {
             // Close FileWriters
@@ -156,7 +155,7 @@ public class Exporter {
                 try {
                     pair.getValue().close();
                 } catch (IOException e) {
-                    log.error("Error : Impossible to close file with name ".concat(pair.getKey()), e);
+                    this.neo4jAl.error("Error : Impossible to close file with name ".concat(pair.getKey()), e);
                 }
             }
         }
@@ -196,7 +195,7 @@ public class Exporter {
         ResourceIterator<Node> nodeIt = null;
 
         try {
-            nodeIt = this.tx.findNodes(label);
+            nodeIt = this.neo4jAl.findNodes(label);
         } catch (Exception e) {
             throw new Neo4jQueryException("An error occured trying to retrieve node by label", e, "SAVExELTC01");
         }
@@ -217,7 +216,7 @@ public class Exporter {
         csv.append(INDEX_COL.concat(DELIMITER)); // Add index property
         csv.append(String.join(DELIMITER, headers)).append("\n");
 
-        log.info("Appending headers for label ".concat(label.name()));
+        this.neo4jAl.info("Appending headers for label ".concat(label.name()));
 
         for (Node n : nodeList) {
             List<String> valueList = new ArrayList<>();
@@ -258,7 +257,7 @@ public class Exporter {
      */
     private void createZip(String targetName) throws FileIOException {
         File f = new File(pathParams.concat(targetName));
-        log.info("Creating zip file..");
+        this.neo4jAl.info("Creating zip file..");
 
         try (ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(f))) {
 
@@ -275,14 +274,14 @@ public class Exporter {
                         zipOut.write(bytes, 0, length);
                     }
                 } catch (Exception e) {
-                    log.error("An error occurred trying to zip file with name : ".concat(filename), e);
+                    this.neo4jAl.error("An error occurred trying to zip file with name : ".concat(filename), e);
                 }
 
-                if(!fileToZip.delete()) log.error("Error trying to delete file with name : ".concat(filename));
+                if(!fileToZip.delete()) this.neo4jAl.error("Error trying to delete file with name : ".concat(filename));
             }
 
         } catch (IOException e) {
-            log.error("An error occurred trying create zip file with name : ".concat(targetName), e);
+            this.neo4jAl.error("An error occurred trying create zip file with name : ".concat(targetName), e);
             throw new FileIOException("An error occurred trying create zip file with name.", e, "SAVExCZIP01");
         }
 
@@ -301,8 +300,8 @@ public class Exporter {
             try {
                 content = exportLabelToCSV(toTreat);
             } catch (Neo4jNoResult | Neo4jQueryException e) {
-                log.error("Error trying to save label : ".concat(toTreat.name()), e);
-                MESSAGE_QUEUE.add(new OutputMessage("Error : No nodes found with label : ".concat(toTreat.name())));
+                this.neo4jAl.error("Error trying to save label : ".concat(toTreat.name()), e);
+                MESSAGE_QUEUE.add("Error : No nodes found with label : ".concat(toTreat.name()));
                 continue;
             }
 
@@ -318,7 +317,7 @@ public class Exporter {
         }
     }
 
-    public Stream<OutputMessage> save(List<String> labelList,
+    public List<String> save(List<String> labelList,
                                       String path,
                                       String zipFileName,
                                       Boolean saveRelationShip,
@@ -336,36 +335,33 @@ public class Exporter {
         // openTransaction
         try {
             String targetName = zipFileName.concat(".zip");
-            log.info(String.format("Saving Configuration to %s ...", targetName));
-
-            this.tx = db.beginTx();
+            this.neo4jAl.info(String.format("Saving Configuration to %s ...", targetName));
 
             saveNodes();
             if(saveRelationshipParams) saveRelationships();
 
             createZip(targetName);
-            MESSAGE_QUEUE.add(new OutputMessage("Saving done"));
+            MESSAGE_QUEUE.add("Saving done..");
 
-            this.tx.commit();
-
-            return MESSAGE_QUEUE.stream();
+            return MESSAGE_QUEUE;
         } catch (FileIOException e) {
-            if(this.tx != null) this.tx.rollback();
             throw new ProcedureException(e);
-        } finally {
-            if(this.tx != null) this.tx.close();
         }
-
-
     }
 
 
-    public Exporter(GraphDatabaseService db, Log log) {
-        this.db = db;
-        this.log = log;
+    /**
+     * Constructor
+     * @param neo4jAl Neo4j Access Layer
+     * @param delimiter Delimiter of the exporter
+     */
+    public Exporter(Neo4jAl neo4jAl, String delimiter) {
 
+        this.neo4jAl = neo4jAl;
         this.closedLabelSet = new HashSet<>();
         this.nodeLabelMap = new HashSet<>();
         this.createdFilenameList = new HashSet<>();
+
+        this.delimiter = delimiter;
     }
 }
