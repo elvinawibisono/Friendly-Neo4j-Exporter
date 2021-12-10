@@ -7,10 +7,7 @@ import com.castsoftware.exporter.exceptions.ProcedureException;
 import com.castsoftware.exporter.exceptions.file.FileCorruptedException;
 import com.castsoftware.exporter.exceptions.neo4j.Neo4jQueryException;
 import com.castsoftware.exporter.results.OutputMessage;
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
-import com.opencsv.CSVWriter;
-import com.opencsv.CSVWriterBuilder;
+import com.opencsv.*;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -39,10 +36,19 @@ public class NewImporter {
 		for(ZipEntry en : entries)  { // Loop over the entries
 			try (InputStreamReader br = new InputStreamReader(zf.getInputStream(en), "UTF-8")) {
 
-				// Read header
-				CSVReader reader = new CSVReader(br);
+				RFC4180Parser  parser = new RFC4180ParserBuilder()
+						.withSeparator(CSVWriter.DEFAULT_SEPARATOR)
+						.withQuoteChar(CSVWriter.DEFAULT_QUOTE_CHARACTER)
+						.build();
+
+				CSVReader reader = new CSVReaderBuilder(br)
+						.withCSVParser(parser)
+						.build();
+
 				String[] headers = reader.readNext(); // Read headers
 				List<String> lHeaders = List.of(headers);
+
+				neo4jAl.info(String.format("Header discovered for %s : %s ", zf.getName(), String.join(", ", lHeaders)));
 
 				// Parse and create node
 				String[] record;
@@ -76,7 +82,15 @@ public class NewImporter {
 			try (InputStreamReader br = new InputStreamReader(zf.getInputStream(en), "UTF-8")) {
 
 				// Read header
-				CSVReader reader = new CSVReader(br);
+				RFC4180Parser  parser = new RFC4180ParserBuilder()
+						.withQuoteChar(CSVWriter.DEFAULT_QUOTE_CHARACTER)
+						.withSeparator(CSVWriter.DEFAULT_SEPARATOR)
+						.build();
+
+				CSVReader reader = new CSVReaderBuilder(br)
+						.withCSVParser(parser)
+						.build();
+
 				String[] headers = reader.readNext(); // Read headers
 				List<String> lHeaders = List.of(headers);
 

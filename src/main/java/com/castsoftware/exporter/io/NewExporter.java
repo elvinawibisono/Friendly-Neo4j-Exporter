@@ -97,7 +97,7 @@ public class NewExporter {
 			char charDel = this.delimiter.isEmpty() ? CSVWriter.DEFAULT_SEPARATOR : this.delimiter.charAt(0);
 			// Open the CSV printer - Build the configuration
 			CSVWriterBuilder builder = new CSVWriterBuilder(out)
-					.withSeparator(charDel)
+					.withSeparator(CSVWriter.DEFAULT_SEPARATOR)
 					.withQuoteChar(CSVWriter.DEFAULT_QUOTE_CHARACTER)
 					.withEscapeChar(CSVWriter.DEFAULT_ESCAPE_CHARACTER)
 					.withLineEnd(CSVWriter.DEFAULT_LINE_END);
@@ -161,7 +161,7 @@ public class NewExporter {
 			char charDel = this.delimiter.isEmpty() ? CSVWriter.DEFAULT_SEPARATOR : this.delimiter.charAt(0);
 			// Open the CSV printer - Build the configuration
 			CSVWriterBuilder builder = new CSVWriterBuilder(out)
-					.withSeparator(charDel)
+					.withSeparator(CSVWriter.DEFAULT_SEPARATOR)
 					.withQuoteChar(CSVWriter.DEFAULT_QUOTE_CHARACTER)
 					.withEscapeChar(CSVWriter.DEFAULT_ESCAPE_CHARACTER)
 					.withLineEnd(CSVWriter.DEFAULT_LINE_END);

@@ -126,7 +126,7 @@ public class Neo4jTypeMapper {
 		Matcher matcher = pattern.matcher(o);
 		if(matcher.find()) {
 			// Break list
-			String sub = o.substring(0, o.length() - 1); // Remove square brace
+			String sub = o.substring(1, o.length() - 1); // Remove square brace
 			String[] items = sub.split(","); // Split the list
 
 			List<String> objectList = new ArrayList<>();
