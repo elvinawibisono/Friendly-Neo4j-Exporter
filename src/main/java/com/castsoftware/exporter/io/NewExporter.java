@@ -162,9 +162,10 @@ public class NewExporter {
 			// Open the CSV printer - Build the configuration
 			CSVWriterBuilder builder = new CSVWriterBuilder(out)
 					.withSeparator(charDel)
-					.withQuoteChar(CSVWriter.NO_QUOTE_CHARACTER)
+					.withQuoteChar(CSVWriter.DEFAULT_QUOTE_CHARACTER)
 					.withEscapeChar(CSVWriter.DEFAULT_ESCAPE_CHARACTER)
-					.withLineEnd(CSVWriter.DEFAULT_LINE_END);;
+					.withLineEnd(CSVWriter.DEFAULT_LINE_END);
+
 			try (ICSVWriter printer = builder.build()) {
 
 				// Append header

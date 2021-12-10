@@ -15,6 +15,8 @@ import java.util.stream.StreamSupport;
 
 public class NodesUtils {
 
+
+
 	/**
 	 * Get the list of properties for a label
 	 * @param neo4jAl Neo4j Access Layer
@@ -69,13 +71,6 @@ public class NodesUtils {
 				values.add(it);
 			}
 
-			// Random check 1 per 100
-			if((int)(Math.random() * ((100) + 1)) < 7) {
-				neo4jAl.info("Random value check");
-				neo4jAl.info(String.format("Keys :: [ %s ]", String.join(", ", keys)));
-				String[] stringValues = Formatter.toString(values);
-				neo4jAl.info(String.format("Values :: [ %s ]", String.join(", ", stringValues)));
-			}
 			return values;
 		} catch (Exception e) {
 			neo4jAl.error(String.format("Failed to extract values from node with id [%d] ", n.getId()), e);

@@ -86,6 +86,21 @@ public class Neo4jAl {
 	}
 
 	/**
+	 * Retrieve a node using its ID
+	 * @throws Neo4jQueryException
+	 */
+	public Node createNode() throws Neo4jQueryException {
+
+		try {
+			return this.transaction.createNode();
+		} catch (NotFoundException e) {
+			return null;
+		} catch (Exception e) {
+			throw new Neo4jQueryException("Cannot create a node.", e, "GNBI2");
+		}
+	}
+
+	/**
 	 * Log information into the Neo4j Log File
 	 * @param message Message to log
 	 */

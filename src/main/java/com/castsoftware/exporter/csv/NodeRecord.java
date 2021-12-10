@@ -2,6 +2,7 @@ package com.castsoftware.exporter.csv;
 
 import com.castsoftware.exporter.database.Neo4jAl;
 import com.castsoftware.exporter.utils.NodesUtils;
+import com.castsoftware.exporter.utils.Shared;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 
@@ -13,8 +14,7 @@ import java.util.List;
  */
 public class NodeRecord {
 
-	private static final String ID = "Id";
-	private static final String LABELS = "Labels";
+
 
 	/**
 	 * Get the record for the node
@@ -48,8 +48,8 @@ public class NodeRecord {
 	 */
 	public static List<String> getHeaders(Neo4jAl neo4jAl, String label) {
 		List<String> headers = new ArrayList<>();
-		headers.add(ID);
-		headers.add(LABELS);
+		headers.add(Shared.NODE_ID);
+		headers.add(Shared.NODE_LABELS);
 		headers.addAll(NodesUtils.getKeysByLabel(neo4jAl, label));
 		return headers;
 	}

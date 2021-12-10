@@ -3,7 +3,6 @@ package com.castsoftware.exporter.procedures;
 import com.castsoftware.exporter.database.Neo4jAl;
 import com.castsoftware.exporter.exceptions.ProcedureException;
 import com.castsoftware.exporter.exceptions.file.FileIOException;
-import com.castsoftware.exporter.io.Exporter;
 import com.castsoftware.exporter.io.NewExporter;
 import com.castsoftware.exporter.results.OutputMessage;
 import org.neo4j.graphdb.GraphDatabaseService;
