@@ -9,4 +9,6 @@ public class Shared {
 	public static final String RELATIONSHIP_END = "End";
 	public static final String RELATIONSHIP_TYPE = "Type";
 
+	// Parameters
+	public static final int NODE_BATCH_SIZE = 5000;
 }

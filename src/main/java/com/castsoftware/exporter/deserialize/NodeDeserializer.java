@@ -4,8 +4,7 @@ import com.castsoftware.exporter.database.Neo4jAl;
 import com.castsoftware.exporter.database.Neo4jAlUtils;
 import com.castsoftware.exporter.exceptions.neo4j.Neo4jQueryException;
 import com.castsoftware.exporter.utils.Shared;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.neo4j.graphdb.Node;
 
 import java.util.HashMap;

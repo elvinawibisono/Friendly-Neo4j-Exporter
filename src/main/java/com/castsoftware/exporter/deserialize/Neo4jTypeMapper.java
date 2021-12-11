@@ -59,6 +59,10 @@ public class Neo4jTypeMapper {
 	 */
 	public static Object getNeo4jType(String o) {
 		if(o == null) return null;
+		if(o.equals("null")) return null;
+
+		// RemoveCSV Double quotes
+		o = o.replaceFirst("(^\\\"+)|(\\\"+$)", "");
 
 		Pattern pattern;
 		Matcher matcher;
@@ -105,8 +109,6 @@ public class Neo4jTypeMapper {
 		};
 
 		// String , trim and remove \"
-		o = o.replaceFirst("^\"", "");
-		o = o.replaceFirst("\"$", "");
 		o = o.trim();
 		return o;
 	}
@@ -121,7 +123,7 @@ public class Neo4jTypeMapper {
 		String o = obj.toString();
 
 		// List of primitive
-		final String regexList = "\\[(?:[^\\]].)+]"; // Verify if the form is ["...."]
+		final String regexList = "\\[(([^,\\]]+,?)+)\\]"; // Verify if the form is ["...."]
 		Pattern pattern = Pattern.compile(regexList, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
 		Matcher matcher = pattern.matcher(o);
 		if(matcher.find()) {
@@ -139,7 +141,7 @@ public class Neo4jTypeMapper {
 
 			return objectList;
 		} else {
-			throw new Exception("The object is not a list");
+			throw new Exception(String.format("The object is not a list. Object : %s", obj.toString()));
 		}
 	}
 

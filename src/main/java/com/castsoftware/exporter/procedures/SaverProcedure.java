@@ -51,7 +51,7 @@ public class SaverProcedure {
          try {
              Neo4jAl neo4jAl = new Neo4jAl(db, transaction, log);
              NewExporter exporter = new NewExporter(neo4jAl, delimiter);
-             Path output = exporter.export(path, zipFileName, labelList);
+             Path output = exporter.exportLabelList(path, zipFileName, labelList);
              return Stream.of(new OutputMessage(String.format("A new zip file has been created under '%s'.", output.toString())));
          } catch (Exception | FileIOException e) {
              log.error("Failed to export the list of nodes.", e);

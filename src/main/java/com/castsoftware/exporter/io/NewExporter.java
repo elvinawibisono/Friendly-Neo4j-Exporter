@@ -4,10 +4,12 @@ import com.castsoftware.exporter.csv.Formatter;
 import com.castsoftware.exporter.csv.NodeRecord;
 import com.castsoftware.exporter.csv.RelationshipRecord;
 import com.castsoftware.exporter.database.Neo4jAl;
+import com.castsoftware.exporter.database.Neo4jAlUtils;
 import com.castsoftware.exporter.exceptions.file.FileIOException;
 import com.castsoftware.exporter.exceptions.neo4j.Neo4jQueryException;
-import com.castsoftware.exporter.utils.NodesUtils;
+import com.castsoftware.exporter.utils.List.Partition;
 import com.castsoftware.exporter.utils.RelationshipsUtils;
+import com.castsoftware.exporter.utils.Shared;
 import com.opencsv.*;
 import org.neo4j.graphdb.*;
 
@@ -16,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -29,6 +32,20 @@ public class NewExporter {
 	private final Neo4jAl neo4jAl;
 	private String delimiter;
 	private Boolean considerNeighbors;
+
+	/**
+	 * Build th standard CSV Writer to parse the zip file
+	 * @param out File Writer
+	 * @return
+	 */
+	public CSVWriterBuilder getCSVWriterBuilder(FileWriter out) {
+		return new CSVWriterBuilder(out)
+				.withSeparator(CSVWriter.DEFAULT_SEPARATOR)
+				.withQuoteChar(CSVWriter.DEFAULT_QUOTE_CHARACTER)
+				.withEscapeChar(CSVWriter.DEFAULT_ESCAPE_CHARACTER)
+				.withLineEnd(CSVWriter.DEFAULT_LINE_END);
+	}
+
 
 	/**
 	 * Appends all the files created during this process to the target zip.
@@ -71,7 +88,6 @@ public class NewExporter {
 			this.neo4jAl.error("An error occurred trying create zip file with name : ".concat(targetName), e);
 			throw new FileIOException("An error occurred trying create zip file with name.", e, "SAVExCZIP01");
 		}
-
 	}
 
 	/**
@@ -79,13 +95,11 @@ public class NewExporter {
 	 * @param label Labels to export
 	 * @return The list of files created
 	 */
-	private Path exportLabels(Path path, String label) throws Exception {
+	private Path exportByLabels(Path path, String label) throws Exception {
 		neo4jAl.info(String.format("Start to export label : %s..", label));
 
 		String filename = NODE_PREFIX.concat(label).concat(EXTENSION);
 		Path filepath = path.resolve(filename);
-		Boolean exists = Files.exists(filepath);
-
 		File outputFile = filepath.toFile();
 
 		// Open the file
@@ -94,33 +108,27 @@ public class NewExporter {
 			// Get the headers
 			List<String> headers = NodeRecord.getHeaders(neo4jAl, label);
 
-			char charDel = this.delimiter.isEmpty() ? CSVWriter.DEFAULT_SEPARATOR : this.delimiter.charAt(0);
 			// Open the CSV printer - Build the configuration
-			CSVWriterBuilder builder = new CSVWriterBuilder(out)
-					.withSeparator(CSVWriter.DEFAULT_SEPARATOR)
-					.withQuoteChar(CSVWriter.DEFAULT_QUOTE_CHARACTER)
-					.withEscapeChar(CSVWriter.DEFAULT_ESCAPE_CHARACTER)
-					.withLineEnd(CSVWriter.DEFAULT_LINE_END);
-
+			CSVWriterBuilder builder = getCSVWriterBuilder(out);
 
 			try (ICSVWriter printer = builder.build()) {
-
 				// Append header
 				printer.writeNext(headers.toArray(new String[0]));
 
 				// Parse nodes and append to the list
-				ResourceIterator<Node> it = neo4jAl.findNodes(Label.label(label));
+				Iterator<Node> iter = neo4jAl.findNodes(Label.label(label));
+
 				Node x;
 				int count = 0;
 				String[] values;
-				for (Iterator<Node> iter = it.stream().iterator(); iter.hasNext(); ) {
+				while (iter.hasNext()) {
 					x = iter.next();
 					values = Formatter.toString(NodeRecord.getNodeRecord(neo4jAl, x, headers));
 					printer.writeNext(values);
 
 					// Count
 					count++;
-					if(count % 200 == 0) neo4jAl.info(String.format("%d labels exported...", count));
+					if(count % 200 == 0) neo4jAl.info(String.format("%d nodes exported...", count));
 				}
 			}
 
@@ -160,11 +168,7 @@ public class NewExporter {
 
 			char charDel = this.delimiter.isEmpty() ? CSVWriter.DEFAULT_SEPARATOR : this.delimiter.charAt(0);
 			// Open the CSV printer - Build the configuration
-			CSVWriterBuilder builder = new CSVWriterBuilder(out)
-					.withSeparator(CSVWriter.DEFAULT_SEPARATOR)
-					.withQuoteChar(CSVWriter.DEFAULT_QUOTE_CHARACTER)
-					.withEscapeChar(CSVWriter.DEFAULT_ESCAPE_CHARACTER)
-					.withLineEnd(CSVWriter.DEFAULT_LINE_END);
+			CSVWriterBuilder builder = getCSVWriterBuilder(out);
 
 			try (ICSVWriter printer = builder.build()) {
 
@@ -172,11 +176,11 @@ public class NewExporter {
 				printer.writeNext(headers.toArray(new String[0]));
 
 				// Parse nodes and append to the list
-				ResourceIterator<Node> it = neo4jAl.findNodes(Label.label(label));
+				Iterator<Node> iter = neo4jAl.findNodes(Label.label(label));
 				int count = 0;
 				Node x;
 				String[] values;
-				for (Iterator<Node> iter = it.stream().iterator(); iter.hasNext(); ) {
+				while (iter.hasNext()) {
 					x = iter.next();
 					for(Relationship rel : RelationshipsUtils.getRelationships(x, type, Direction.BOTH)) {
 						values = Formatter.toString(RelationshipRecord.getRelationshipRecord(neo4jAl, rel, headers));
@@ -235,7 +239,7 @@ public class NewExporter {
 	 * @param path Path to export
 	 * @param fileName File name to export
 	 */
-	public Path export(String path, String fileName, List<String> labels) throws Exception, FileIOException {
+	public Path exportLabelList(String path, String fileName, List<String> labels) throws Exception, FileIOException {
 		neo4jAl.info("Verifying path and authorization...");
 		Path directoryPath = Paths.get(path);
 		if( !Files.exists(directoryPath)) throw new Exception(String.format("The specified directory doesn't exist. Path : '%s'.", path)); // If exists
@@ -246,13 +250,50 @@ public class NewExporter {
 		neo4jAl.info("Exporting labels...");
 		List<Path> createdFiles = new ArrayList<>();
 		for(String label : labels) {
-			createdFiles.add(this.exportLabels(directoryPath, label));
+			createdFiles.add(this.exportByLabels(directoryPath, label));
 		}
 		neo4jAl.info("Labels exported.");
 
 		// For each label, export the list of relationships
 		neo4jAl.info("Exporting relationships...");
 		createdFiles.addAll(this.exportRelationships(neo4jAl, directoryPath, labels));
+		neo4jAl.info("Relationships exported.");
+
+		// From the list of files created, zip them
+		neo4jAl.info("Zipping the files created...");
+		return this.createZip(directoryPath, fileName, createdFiles);
+	}
+
+	/**
+	 * Export the list of labels
+	 * @param path Path to export
+	 * @param filename File name to export
+	 * @param ids List of long ids to export
+	 */
+	public Path exportIdListString(String path, String fileName, List<Long> ids) throws Exception, Neo4jQueryException, FileIOException {
+		neo4jAl.info("Verifying path and authorization...");
+		Path directoryPath = Paths.get(path);
+		if( !Files.exists(directoryPath)) throw new Exception(String.format("The specified directory doesn't exist. Path : '%s'.", path)); // If exists
+		if(!Files.isWritable(directoryPath)) throw new Exception(String.format("Not enough authorization to write files: Path : '%s'.", path)); // If Writable
+		neo4jAl.info("Path verified and writable");
+
+		// For each label create, process and create files ( nodes + labels )
+		neo4jAl.info("Exporting Nodes...");
+
+		// Find labels by ID and sort them  in a map
+		ids = ids.stream().distinct().collect(Collectors.toList()); // Filter to get distinct values
+		Map<String, List<Node>> labeledNodes = Neo4jAlUtils.sortNodesByLabel(neo4jAl, ids);
+
+		List<Path> createdFiles = new ArrayList<>();
+		
+		/* for(String label : labels) {
+			createdFiles.add(this.exportByLabels(directoryPath, label));
+		}
+		neo4jAl.info("Labels exported.");
+
+		// For each label, export the list of relationships
+		neo4jAl.info("Exporting relationships...");
+		createdFiles.addAll(this.exportRelationships(neo4jAl, directoryPath, labels)); */
 		neo4jAl.info("Relationships exported.");
 
 		// From the list of files created, zip them

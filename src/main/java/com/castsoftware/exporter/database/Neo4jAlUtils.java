@@ -8,10 +8,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 
 import javax.swing.text.html.Option;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class Neo4jAlUtils {
 
@@ -35,12 +32,13 @@ public class Neo4jAlUtils {
 	/**
 	 * Format the where clause to have a string with
 	 * @param properties Properties of the object
+	 * @param o Label of the object concerned by the parameters
 	 * @return
 	 */
-	private static String formatWhere( Map<String, Object> properties) {
+	private static String formatWhere( Map<String, Object> properties, String o) {
 		List<String> sb = new ArrayList<>();
 		for(Map.Entry<String, Object> l : properties.entrySet()) {
-			sb.add(String.format("%s=$%s", l.getKey(), l.getKey()));
+			sb.add(String.format("%s.%s=$%s", o, l.getKey(), l.getKey()));
 		}
 		if(sb.size() == 0) return " ";
 		else return " WHERE " + String.join(" AND ",sb);
@@ -56,7 +54,7 @@ public class Neo4jAlUtils {
 	public static Optional<Node> getNode(Neo4jAl neo4jAl, List<String> labels, Map<String, Object> properties) throws Neo4jQueryException {
 
 		String sLabels = formatLabels(labels);
-		String sWhereClause = formatWhere(properties);
+		String sWhereClause = formatWhere(properties, "o");
 		String req = String.format("MATCH (o%1$s) %2$s RETURN o as node", sLabels, sWhereClause);
 
 		try {
@@ -66,6 +64,28 @@ public class Neo4jAlUtils {
 		} catch (Neo4jQueryException e) {
 			neo4jAl.error(String.format("Failed to get the node. Request : %s", req), e);
 			throw new Neo4jQueryException("Failed to get the node.", e, "NEO4JUTILS");
+		}
+	}
+
+
+	public static Map<String, List<Node>> sortNodesByLabel(Neo4jAl neo4jAl, List<Long> ids) throws Neo4jQueryException {
+		Map<String, List<Node>> returnMap = new HashMap<>();
+		String req = "MATCH (o) WHERE ID(o) IN $idList " +
+				"RETURN DISTINCT o as node, LABELS(o)[0] as label";
+
+		try {
+			Map<String, Object> records;
+			Result res = neo4jAl.executeQuery(req, Map.of("idList", ids));
+			while(res.hasNext()) {
+				records = res.next();
+				returnMap.putIfAbsent((String) records.get("label"), new ArrayList<>());
+				returnMap.get((String) records.get("label")).add((Node) records.get("node"));
+			}
+
+			return returnMap;
+		} catch (Neo4jQueryException e) {
+			neo4jAl.error(String.format("Failed to build the node map. Request : %s", req), e);
+			throw new Neo4jQueryException("Failed to build the node map.", e, "NEO4JUTILS");
 		}
 	}
 
