@@ -6,6 +6,7 @@ import org.neo4j.graphdb.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -52,6 +53,28 @@ public class RelationshipsUtils {
 		}
 	}
 
+	/**
+	 * Get the list of relationship type for a label
+	 * @param neo4jAl Neo4j Access Layer
+	 * @param nodes List of node to process
+	 * @return The list of values as object
+	 */
+	public static List<String> getRelationshipForNodes(Neo4jAl neo4jAl, List<Node> nodes) {
+		String request = "MATCH (o)-[a]-() " +
+				"WHERE ID(o) in $idList " +
+				"UNWIND Type(a) AS key RETURN collect(distinct key) as rels";
+
+		try {
+			List<Long> idList = nodes.stream().map(Node::getId).collect(Collectors.toList());
+			Result result = neo4jAl.executeQuery(request, Map.of("idList", idList));
+			if(!result.hasNext()) return new ArrayList<>();
+			else return ((List<String>) result.next().get("rels")).stream()
+					.sorted().collect(Collectors.toList());
+		} catch (Neo4jQueryException e) {
+			neo4jAl.error(String.format("Failed to get the list relationships for %d", nodes.size()), e);
+			throw new Error("Failed to get the list of relationships");
+		}
+	}
 
 	/**
 	 * Get the list of values for a specific node
@@ -116,6 +139,25 @@ public class RelationshipsUtils {
 						if(toConsider.contains(l.name())) return true;
 					}
 					return false;
+				})
+				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * Get the list of relationship for a node
+	 * @param n Node
+	 * @param direction Direction
+	 * @param toConsiderNodes List of nodes to take in account
+	 * @return The list
+	 */
+	public static Set<Relationship> getRelationshipsFilterOnNodes(Node n,  Direction direction,
+													 List<Node> toConsiderNodes) {
+		return StreamSupport
+				.stream(n.getRelationships(direction).spliterator(), false)
+				.filter(x -> {
+					// Filter nodes where at least a label is in the list
+					Node oth = x.getOtherNode(n);
+					return (toConsiderNodes.contains(oth));
 				})
 				.collect(Collectors.toSet());
 	}

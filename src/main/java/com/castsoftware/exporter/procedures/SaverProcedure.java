@@ -29,21 +29,19 @@ public class SaverProcedure {
     public Transaction transaction;
 
     /**
-     * Neo4 Procedure entry point for "fexporter.save()". See Neo4j documentation for more information.
+     * Neo4; Procedure entry point for "fexporter.save.labels()". See Neo4j documentation for more information.
      * @throws ProcedureException
 
-     @Description("fexporter.save(LabelsToSave, Path, ZipFileName, SaveRelationship, ConsiderNeighbors) - Save labels to CSV file format. \n" +
+     @Description("fexporter.save.labels(List<String>LabelsToSave, String Path, String ZipFileName, String Delimiter) - Save labels to CSV file format. \n" +
      "Parameters : \n" +
-     "               - @LabelsToSave- <String List> - Labels to save, as a list of string. Ex : [\"C_relationship\", \"F_FrameworkRule\"] " +
-     "               - @Path - <String> - Location to save output results. Ex : \"C:\\User\\John\"" +
-     "               - @ZipFileName - <String> - Name of the final zip file (the extension .zip will be automatically added). Ex : \"Result_05_09\" " +
-     "               - @SaveRelationship - <Boolean> - Save relationships associated to the labels selected. If the option @ConsiderNeighbors is active, relationships involving neighbors' label will also be saved in the process" +
-     "               - @ConsiderNeighbors - <Boolean> - Consider the neighbors of selected labels. If a node in the provided label list has a relationship with another node from a different label, this label will also be saved. " +
-     "                                                  This option does not necessitate the activation of @SaveRelationship to work, but it is strongly recommended to keep the report consistent." +
-     "Example of use : CALL fexporter.save([\"C_relationship\", \"F_FrameworkRule\"], \"C:/Neo4j_exports/\", \"MyReport\", true, true )" +
+     "               - @LabelsToSave- <String List> - Labels to save, as a list of string. E.g. : [\"C_relationship\", \"F_FrameworkRule\"] " +
+     "               - @Path - <String> - Location to save output results. E.g. : \"C:\\User\\John\"" +
+     "               - @ZipFileName - <String> - Name of the final zip file (the extension .zip will be automatically added). E.g. : \"Result_05_09\" " +
+     "               - @Delimiter - <String> - CSV delimiting character " +
+     "Example of use : CALL fexporter.save.labels([\"C_relationship\", \"F_FrameworkRule\"], \"C:/Neo4j_exports/\", \"MyReport\", "," )" +
      "")**/
-     @Procedure(value = "fexporter.save", mode = Mode.WRITE)
-     public Stream<OutputMessage> saveProcedure(@Name(value = "LabelsToSave") List<String> labelList,
+     @Procedure(value = "fexporter.save.labels", mode = Mode.WRITE)
+     public Stream<OutputMessage> saveLabelProcedure(@Name(value = "LabelsToSave") List<String> labelList,
                                                 @Name(value = "Path") String path,
                                                 @Name(value = "ZipFileName",defaultValue="export") String zipFileName,
                                                 @Name(value = "Delimiter", defaultValue=";") String delimiter
@@ -54,10 +52,40 @@ public class SaverProcedure {
              Path output = exporter.exportLabelList(path, zipFileName, labelList);
              return Stream.of(new OutputMessage(String.format("A new zip file has been created under '%s'.", output.toString())));
          } catch (Exception | FileIOException e) {
-             log.error("Failed to export the list of nodes.", e);
+             log.error("Failed to export the list of label.", e);
              throw new ProcedureException("Failed to export the list of node. Check Neo4J logs for more details...", e);
          }
      }
+
+
+    /**
+     * Neo4j Procedure entry point for "fexporter.save()". See Neo4j documentation for more information.
+     * @throws ProcedureException
+
+     @Description("fexporter.save(NodesToSave, Path, ZipFileName, SaveRelationship, ConsiderNeighbors) - Save labels to CSV file format. \n" +
+     "Parameters : \n" +
+     "               - @NodesToSave- <Long String> - ID List to save, as a list of long. E.g. : [ 10002, 10004] " +
+     "               - @Path - <String> - Location to save output results. E.g. : \"C:\\User\\John\"" +
+     "               - @ZipFileName - <String> - Name of the final zip file (the extension .zip will be automatically added). E.g. : \"Result_05_09\" " +
+     "               - @Delimiter - <String> - CSV delimiting character " +
+     "Example of use : CALL fexporter.save.nodes([ 10002, 10004], \"C:/Neo4j_exports/\", \"MyReport\", "," )" +
+     "")**/
+    @Procedure(value = "fexporter.save.nodes", mode = Mode.WRITE)
+    public Stream<OutputMessage> saveNodeProcedure(@Name(value = "NodesToSave") List<Long> nodeList,
+                                               @Name(value = "Path") String path,
+                                               @Name(value = "ZipFileName",defaultValue="export") String zipFileName,
+                                               @Name(value = "Delimiter", defaultValue=";") String delimiter
+    ) throws ProcedureException{
+        try {
+            Neo4jAl neo4jAl = new Neo4jAl(db, transaction, log);
+            NewExporter exporter = new NewExporter(neo4jAl, delimiter);
+            Path output = exporter.exportIdListString(path, zipFileName, nodeList);
+            return Stream.of(new OutputMessage(String.format("A new zip file has been created under '%s'.", output.toString())));
+        } catch (Exception | FileIOException e) {
+            log.error("Failed to export the list of nodes.", e);
+            throw new ProcedureException("Failed to export the list of node. Check Neo4J logs for more details...", e);
+        }
+    }
 
      public SaverProcedure() { } // Neo4J POJO **/
 }

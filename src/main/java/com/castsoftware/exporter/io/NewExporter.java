@@ -7,9 +7,7 @@ import com.castsoftware.exporter.database.Neo4jAl;
 import com.castsoftware.exporter.database.Neo4jAlUtils;
 import com.castsoftware.exporter.exceptions.file.FileIOException;
 import com.castsoftware.exporter.exceptions.neo4j.Neo4jQueryException;
-import com.castsoftware.exporter.utils.List.Partition;
 import com.castsoftware.exporter.utils.RelationshipsUtils;
-import com.castsoftware.exporter.utils.Shared;
 import com.opencsv.*;
 import org.neo4j.graphdb.*;
 
@@ -95,7 +93,7 @@ public class NewExporter {
 	 * @param label Labels to export
 	 * @return The list of files created
 	 */
-	private Path exportByLabels(Path path, String label) throws Exception {
+	private Path exportByLabel(Path path, String label) throws Exception {
 		neo4jAl.info(String.format("Start to export label : %s..", label));
 
 		String filename = NODE_PREFIX.concat(label).concat(EXTENSION);
@@ -147,13 +145,118 @@ public class NewExporter {
 	}
 
 	/**
+	 * Export a specific label to a specified path and return the list of files ( node + relationships ) created
+	 * @param label Labels to export
+	 * @return The list of files created
+	 */
+	private Path exportBy(Path path, String label) throws Exception {
+		neo4jAl.info(String.format("Start to export label : %s..", label));
+
+		String filename = NODE_PREFIX.concat(label).concat(EXTENSION);
+		Path filepath = path.resolve(filename);
+		File outputFile = filepath.toFile();
+
+		// Open the file
+		try (FileWriter out = new FileWriter(outputFile)){
+
+			// Get the headers
+			List<String> headers = NodeRecord.getHeaders(neo4jAl, label);
+
+			// Open the CSV printer - Build the configuration
+			CSVWriterBuilder builder = getCSVWriterBuilder(out);
+
+			try (ICSVWriter printer = builder.build()) {
+				// Append header
+				printer.writeNext(headers.toArray(new String[0]));
+
+				// Parse nodes and append to the list
+				Iterator<Node> iter = neo4jAl.findNodes(Label.label(label));
+
+				Node x;
+				int count = 0;
+				String[] values;
+				while (iter.hasNext()) {
+					x = iter.next();
+					values = Formatter.toString(NodeRecord.getNodeRecord(neo4jAl, x, headers));
+					printer.writeNext(values);
+
+					// Count
+					count++;
+					if(count % 200 == 0) neo4jAl.info(String.format("%d nodes exported...", count));
+				}
+			}
+
+			return filepath;
+
+		} catch (IOException e) {
+			neo4jAl.error(String.format("Failed to create a file at '%s'.", filepath.toString()), e);
+			throw new Exception(String.format("Failed to export label '%s'. File Error.", label));
+		} catch (Neo4jQueryException e) {
+			neo4jAl.error(String.format("Failed to get the list of nodes with labels '%s'.", label, e));
+			throw new Exception(String.format("Failed to export label '%s'. File Error.", label));
+		} catch (Exception e) {
+			neo4jAl.error(String.format("Unexpected error during processing of the label '%s'.", filepath.toString()), e);
+			throw new Exception(String.format("Failed to export label '%s'. File Error.", label));
+		}
+	}
+
+	/**
+	 * Export a specific label to a specified path and return the list of files ( node + relationships ) created
+	 * @param label Labels to export
+	 * @return The list of files created
+	 */
+	private Path exportById(Path path, String label, List<Node> nodes) throws Exception {
+		neo4jAl.info(String.format("Start to export label : %s..", label));
+
+		String filename = String.format("%s%s%s", NODE_PREFIX, label, EXTENSION);
+		Path filepath = path.resolve(filename);
+		File outputFile = filepath.toFile();
+
+		// Open the file
+		try (FileWriter out = new FileWriter(outputFile)){
+
+			// Get the headers
+			List<String> headers = NodeRecord.getHeaders(neo4jAl, label);
+
+			// Open the CSV printer - Build the configuration
+			CSVWriterBuilder builder = getCSVWriterBuilder(out);
+
+			try (ICSVWriter printer = builder.build()) {
+				// Append header
+				printer.writeNext(headers.toArray(new String[0]));
+
+				// Parse nodes and append to the list
+				int count = 0;
+				String[] values;
+				for(Node x : nodes) {
+					values = Formatter.toString(NodeRecord.getNodeRecord(neo4jAl, x, headers));
+					printer.writeNext(values);
+
+					// Count
+					count++;
+					if(count % 200 == 0) neo4jAl.info(String.format("%d nodes exported...", count));
+				}
+			}
+
+			return filepath;
+
+		} catch (IOException e) {
+			neo4jAl.error(String.format("Failed to create a file at '%s'.", filepath.toString()), e);
+			throw new Exception(String.format("Failed to export %d nodes by ID. File Error.", nodes.size()));
+		} catch (Exception e) {
+			neo4jAl.error(String.format("Unexpected error during processing of the label '%s'.", filepath.toString()), e);
+			throw new Exception(String.format("Failed to export %d nodes by ID. File Error.", nodes.size()));
+		}
+	}
+
+	/**
 	 * Export the relationships
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param path Path of export folder
 	 * @param type Type to export
 	 * @return
 	 */
-	private Path exportRelationships(Neo4jAl neo4jAl, Path path, String type, String label) throws Exception {
+	private Path exportRelationshipsByLabel(Neo4jAl neo4jAl, Path path, String type, String label) throws Exception {
 		neo4jAl.info(String.format("Start to export relationship : %s..", type));
 
 		String filename = RELATIONSHIP_PREFIX.concat(type).concat(EXTENSION);
@@ -167,9 +270,9 @@ public class NewExporter {
 			List<String> headers = RelationshipRecord.getHeaders(neo4jAl, type);
 
 			char charDel = this.delimiter.isEmpty() ? CSVWriter.DEFAULT_SEPARATOR : this.delimiter.charAt(0);
+
 			// Open the CSV printer - Build the configuration
 			CSVWriterBuilder builder = getCSVWriterBuilder(out);
-
 			try (ICSVWriter printer = builder.build()) {
 
 				// Append header
@@ -205,7 +308,61 @@ public class NewExporter {
 			neo4jAl.error(String.format("Unexpected error during processing of the relationship '%s'.", type), e);
 			throw new Exception(String.format("Failed to export relationship '%s'. File Error.", type));
 		}
+	}
 
+	/**
+	 * Export the relationships bu Id
+	 * @param neo4jAl Neo4j Access Layer
+	 * @param path Path of export folder
+	 * @param type Type to export
+	 * @return
+	 */
+	private Path exportRelationshipsByNodes(Neo4jAl neo4jAl, Path path, String type, List<Node> nodes) throws Exception {
+		neo4jAl.info(String.format("Start to export relationship : %s..", type));
+
+		String filename =  String.format("%s%s%s", RELATIONSHIP_PREFIX, type, EXTENSION);
+		Path filepath = path.resolve(filename);
+		File outputFile = filepath.toFile();
+
+		// Open the file
+		try (FileWriter out = new FileWriter(outputFile)){
+
+			// Get the headers
+			List<String> headers = RelationshipRecord.getHeaders(neo4jAl, type);
+
+			char charDel = this.delimiter.isEmpty() ? CSVWriter.DEFAULT_SEPARATOR : this.delimiter.charAt(0);
+
+			// Open the CSV printer - Build the configuration
+			CSVWriterBuilder builder = getCSVWriterBuilder(out);
+			try (ICSVWriter printer = builder.build()) {
+
+				// Append header
+				printer.writeNext(headers.toArray(new String[0]));
+
+				// Parse nodes and append to the list
+				int count = 0;
+				String[] values;
+				for (Node n : nodes) {
+					for(Relationship rel : RelationshipsUtils.getRelationships(n, type, Direction.BOTH)) {
+						values = Formatter.toString(RelationshipRecord.getRelationshipRecord(neo4jAl, rel, headers));
+						printer.writeNext(values);
+
+						// Count
+						count++;
+						if(count % 200 == 0) neo4jAl.info(String.format("%d relationships exported...", count));
+					}
+				}
+			}
+
+			return filepath;
+
+		} catch (IOException e) {
+			neo4jAl.error(String.format("Failed to create a file at '%s'.", filepath.toString()), e);
+			throw new Exception(String.format("Failed to export relationship '%s'. File Error.", type));
+		} catch (Exception e) {
+			neo4jAl.error(String.format("Unexpected error during processing of the relationship '%s'.", type), e);
+			throw new Exception(String.format("Failed to export relationship '%s'. File Error.", type));
+		}
 	}
 
 	/**
@@ -214,7 +371,7 @@ public class NewExporter {
 	 * @param labels Labels to process
 	 * @return
 	 */
-	private List<Path> exportRelationships(Neo4jAl neo4jAl, Path directory, List<String> labels) throws Exception {
+	private List<Path> exportLabelsRelationships(Neo4jAl neo4jAl, Path directory, List<String> labels) throws Exception {
 		List<Path> paths = new ArrayList<>();
 		Map<String, List<String>> headersMap = new HashMap<>();
 		Path temp = null;
@@ -226,9 +383,33 @@ public class NewExporter {
 					relationshipTypes.size(), label, String.join(", ", relationshipTypes)));
 
 			for(String type : relationshipTypes) {
-				temp = this.exportRelationships(neo4jAl, directory, type, label);
+				temp = this.exportRelationshipsByLabel(neo4jAl, directory, type, label);
 				paths.add(temp);
 			}
+		}
+
+		return paths;
+	}
+
+	/**
+	 * Export the list of relationships
+	 * @param neo4jAl Neo4j Access Layer
+	 * @param nodes List of node to process
+	 * @return
+	 */
+	private List<Path> exportNodesRelationships(Neo4jAl neo4jAl, Path directory, List<Node> nodes) throws Exception {
+		List<Path> paths = new ArrayList<>();
+		Map<String, List<String>> headersMap = new HashMap<>();
+		Path temp = null;
+
+		// For each labels, export the related type of relationships
+		List<String> relationshipTypes = RelationshipsUtils.getRelationshipForNodes(neo4jAl, nodes);
+		neo4jAl.info(String.format("%d relationship types identified for the %d nodes. Relationships: [ %s ]",
+				relationshipTypes.size(), nodes.size(), String.join(", ", relationshipTypes)));
+
+		for(String type : relationshipTypes) {
+			temp = this.exportRelationshipsByNodes(neo4jAl, directory, type, nodes);
+			paths.add(temp);
 		}
 
 		return paths;
@@ -250,13 +431,13 @@ public class NewExporter {
 		neo4jAl.info("Exporting labels...");
 		List<Path> createdFiles = new ArrayList<>();
 		for(String label : labels) {
-			createdFiles.add(this.exportByLabels(directoryPath, label));
+			createdFiles.add(this.exportByLabel(directoryPath, label));
 		}
 		neo4jAl.info("Labels exported.");
 
 		// For each label, export the list of relationships
 		neo4jAl.info("Exporting relationships...");
-		createdFiles.addAll(this.exportRelationships(neo4jAl, directoryPath, labels));
+		createdFiles.addAll(this.exportLabelsRelationships(neo4jAl, directoryPath, labels));
 		neo4jAl.info("Relationships exported.");
 
 		// From the list of files created, zip them
@@ -267,7 +448,7 @@ public class NewExporter {
 	/**
 	 * Export the list of labels
 	 * @param path Path to export
-	 * @param filename File name to export
+	 * @param fileName File name to export
 	 * @param ids List of long ids to export
 	 */
 	public Path exportIdListString(String path, String fileName, List<Long> ids) throws Exception, Neo4jQueryException, FileIOException {
@@ -284,16 +465,21 @@ public class NewExporter {
 		ids = ids.stream().distinct().collect(Collectors.toList()); // Filter to get distinct values
 		Map<String, List<Node>> labeledNodes = Neo4jAlUtils.sortNodesByLabel(neo4jAl, ids);
 
+		// Create Files for each node to export sorted by label
 		List<Path> createdFiles = new ArrayList<>();
-		
-		/* for(String label : labels) {
-			createdFiles.add(this.exportByLabels(directoryPath, label));
+		for(Map.Entry<String, List<Node>> label : labeledNodes.entrySet()) {
+			createdFiles.add(this.exportById(directoryPath, label.getKey(), label.getValue()));
 		}
-		neo4jAl.info("Labels exported.");
+		neo4jAl.info("Labels exported. %d files were created during the process.");
+
+		// Get nodes by Ids
+		List<Node> nodes = new ArrayList<>();
+		Iterator<Node> itNodes = neo4jAl.findNodes(ids);
+		while (itNodes.hasNext()) nodes.add(itNodes.next());
 
 		// For each label, export the list of relationships
 		neo4jAl.info("Exporting relationships...");
-		createdFiles.addAll(this.exportRelationships(neo4jAl, directoryPath, labels)); */
+		createdFiles.addAll(this.exportNodesRelationships(neo4jAl, directoryPath, nodes));
 		neo4jAl.info("Relationships exported.");
 
 		// From the list of files created, zip them
