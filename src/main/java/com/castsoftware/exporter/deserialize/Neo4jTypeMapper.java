@@ -23,10 +23,12 @@ public class Neo4jTypeMapper {
 		Map<String, String> zipped = new HashMap<>();
 		for (int i = 0; i < headers.size(); i++) {
 			zipped.put(headers.get(i), values.get(i));
+
 		}
 
 		return zipped;
 	}
+
 
 	/**
 	 * Verify the map
@@ -37,6 +39,8 @@ public class Neo4jTypeMapper {
 	public static String verifyMap( Map<String, String> map, String key) throws Exception {
 		if(!map.containsKey(key)) throw new Exception(String.format("The map parameter does not contain key : '%s'.", key));
 		return map.get(key);
+
+		
 	}
 
 	/**

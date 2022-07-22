@@ -123,10 +123,10 @@ public class Neo4jAl {
 
 	/**
 	 * Log information into the Neo4j Log File
-	 * @param message Message to log
+	 * @param string Message to log
 	 */
-	public void info(String message) {
-		log.info(EXPORTER_PREFIX + message);
+	public void info(String string) {
+		log.info(EXPORTER_PREFIX + string);
 	}
 
 	/**

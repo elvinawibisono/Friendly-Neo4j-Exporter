@@ -25,9 +25,10 @@ public class NodesUtils {
 	 */
 	public static List<String> getKeysByLabel(Neo4jAl neo4jAl, String label) {
 		String request = String.format("MATCH (a:`%s`) UNWIND keys(a) AS key RETURN collect(distinct key) as keys", label);
-
+		
 		try {
 			Result result = neo4jAl.executeQuery(request);
+			neo4jAl.info(String.format("result : [%s] ", result));
 			if(!result.hasNext()) return new ArrayList<>();
 			else return ((List<String>) result.next().get("keys")).stream()
 					.sorted().collect(Collectors.toList());
@@ -45,7 +46,7 @@ public class NodesUtils {
 	 */
 	public static List<String> getLabelsAsString(Neo4jAl neo4jAl, Node n) {
 		try {
-			return StreamSupport
+			return StreamSupport 
 					.stream(n.getLabels().spliterator(), false)
 					.map(Label::name)
 					.collect(Collectors.toList());
@@ -65,7 +66,7 @@ public class NodesUtils {
 	public static List<Object> getValues(Neo4jAl neo4jAl, Node n, List<String> keys) {
 		try {
 			List<Object> values = new ArrayList<>();
-			Object it;
+			Object it; 
 			for (String k : keys) { // Parse the keys
 				it = n.hasProperty(k) ? n.getProperty(k) : null;
 				values.add(it);
@@ -78,5 +79,45 @@ public class NodesUtils {
 		}
 	}
 
+	/**
+	 * [modification]
+	 * 	
+	 * Get specific list of node's type for a specific label
+	 * @param neo4jAl Neo4j Access Layer
+	 * @param props Keys to validate 
+	 */
 
-}
+	 public static List<String> getTypes(Neo4jAl neo4jAl, String label, String props){
+
+		String request = String.format("MATCH (a:`%s`) UNWIND a.`%s` AS types RETURN collect(distinct types) as type", label,props);
+		neo4jAl.info(request); 
+		try{
+
+			Result result = neo4jAl.executeQuery(request);
+			neo4jAl.info(String.format("result: [%s]", result));
+			if(!result.hasNext()) return new ArrayList<>();
+			//error line 96, query returns a column of output instead of an array
+			//convert the result to an array in case the query returns only one column 
+			else return ((List<String>) result.next().get("type")).stream().sorted().collect(Collectors.toList()); 
+			//else return StreamSupport stream; ->> doublecheck 
+			//if(result.next().get("types") instanceof String){
+			//	return ((List<String>) result).stream().map(s-> new String[] { s }).sorted().collect(Collectors.toList()); 
+			//}
+
+			//convert the column result to an arraylist 
+			
+			
+		} catch (Neo4jQueryException e) {
+			neo4jAl.error(String.format("Failed to get the list of types,'%s', for the label '%s'", props,label), e);
+			throw new Error("Failed to get label's types");
+		}
+
+		}
+
+
+
+	 }
+
+	
+
+

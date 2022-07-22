@@ -12,8 +12,6 @@ import java.util.List;
 
 public class RelationshipRecord {
 
-
-
 	/**
 	 * Get the record for the node
 	 * @param neo4jAl Neo4j Access Layer
@@ -37,6 +35,27 @@ public class RelationshipRecord {
 	}
 
 	/**
+	 * Get the record for the node
+	 * @param neo4jAl Neo4j Access Layer
+	 * @param n Node
+	 * @param keys Keys
+	 * @return
+	 */
+	public static List<Object> getRelationshipRecordType(Neo4jAl neo4jAl, Relationship n, List<String> keys) {
+		List<Object> objectList = new ArrayList<>();
+
+		// Get start
+		objectList.add(n.getType().name());
+		//objectList.add(n.getType().weight());
+		
+		// Get Values
+		List<String> subList = keys.subList(2, keys.size());
+		objectList.addAll(RelationshipsUtils.getValues(neo4jAl, n, subList));
+
+		return objectList;
+	}
+
+	/**
 	 * Get the list of header
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param type Relationship to process
@@ -50,5 +69,16 @@ public class RelationshipRecord {
 		headers.addAll(RelationshipsUtils.getKeysByType(neo4jAl, type));
 		return headers;
 	}
+
+
+
+	public static List<String> getTypeHeaders(Neo4jAl neo4jAl, String type) {
+		List<String> headers = new ArrayList<>();
+		headers.add(Shared.RELATIONSHIP_TYPE);
+		headers.addAll(RelationshipsUtils.getKeysByType(neo4jAl, type));
+		return headers;
+	}
+	
+	
 
 }
