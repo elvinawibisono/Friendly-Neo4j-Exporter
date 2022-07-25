@@ -65,9 +65,6 @@ public class NodeRecord {
 	
 	public static List<String> getTypeHeaders(Neo4jAl neo4jAl,String label, String prop){
 		List<String> typeHeaders = new ArrayList<>(); 
-		//get label 
-	//	typeHeaders.add(Shared.NODE_ID);
-	//	typeHeaders.add(Shared.NODE_LABELS);
 		typeHeaders.addAll(NodesUtils.getTypes(neo4jAl,label, prop));
 		return typeHeaders; 
 	}

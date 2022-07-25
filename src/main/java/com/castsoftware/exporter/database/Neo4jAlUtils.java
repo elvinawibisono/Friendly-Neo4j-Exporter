@@ -1,5 +1,6 @@
 package com.castsoftware.exporter.database;
 
+import com.castsoftware.exporter.config.getConfigValues;
 import com.castsoftware.exporter.exceptions.neo4j.Neo4jQueryException;
 import com.castsoftware.exporter.utils.Shared;
 import org.neo4j.graphdb.Label;
@@ -9,11 +10,17 @@ import org.neo4j.graphdb.Result;
 
 import javax.swing.text.html.Option;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Neo4jAlUtils {
-	
 
-//	private Neo4jAl neo4jAl;
+
+	private static final String NO_RELATIONSHIP_WEIGHT = getConfigValues.Property.NO_RELATIONSHIP_WEIGHT.toString();//NW
+	private static final String NO_RELATIONSHIP = getConfigValues.Property.NO_RELATIONSHIP.toString(); //NULL
+	private static final String NODE_PROP_TYPE = getConfigValues.Property.NODE_PROP_TYPE.toString();// name
+	private static final String RELATIONSHIP_PROP_VALUE = getConfigValues.Property.RELATIONSHP_PROP_VALUE.toString();
+	private static final String RELATIONSHIP_PROP_TYPE = getConfigValues.Property.RELATIONSHIP_PROP_TYPE.toString(); 
+	private static final String NODE_LABELS = getConfigValues.Property.NODE_LABELS.toString(); 
 
 	/**
 	 * Format the string of labels
@@ -35,11 +42,6 @@ public class Neo4jAlUtils {
 			return ":" + String.join(":", sb);
 	}
 
-	/* 
-	private static formatDefLabels(List<String>labels, List<String> headers){
-
-	}
-	*/
 
 	/**
 	 * Format the where clause to have a string with
@@ -93,6 +95,8 @@ public class Neo4jAlUtils {
 	/**
 	 * [modified]
 	 * Find the node if exist and create a node if not exist 
+	 * using the label and the name of the node
+	 * using MERGE
 	 * @param neo4jAl
 	 * @param headers
 	 * @return
@@ -100,7 +104,7 @@ public class Neo4jAlUtils {
 	 */
 
 	public static Optional<Node>getNodeType(Neo4jAl neo4jAl, String headers) throws Neo4jQueryException{
-		String req = String.format("MERGE (o: `%s` {%s: '%s'})  RETURN o as node", Shared.DEF_NODE_LABELS, Shared.NODE_PROPERTY_TYPE, headers ); 
+		String req = String.format("MERGE (o: `%s` {%s: '%s'})  RETURN o as node", NODE_LABELS, NODE_PROP_TYPE, headers ); 
 
 		neo4jAl.info(req);
 		try{
@@ -108,19 +112,6 @@ public class Neo4jAlUtils {
 
 			return  Optional.ofNullable((Node) res.next().get("node"));
 
-			/* 
-			if(res.hasNext()){
-
-				return  Optional.ofNullable((Node) res.next().get("node"));
-
-			}		
-		
-			else{
-
-				return Optional.empty(); 
-			}
-
-			*/
 		} catch (Neo4jQueryException e) {
 			neo4jAl.error(String.format("Failed to get the node. Request : %s", req), e);
 			throw new Neo4jQueryException("Failed to get the node.", e, "NEO4JUTILS");
@@ -209,10 +200,12 @@ public class Neo4jAlUtils {
 	}
 
 
-	
-	
-	/*
-	 * Get a relationship
+	/**
+	 * [modified]
+	 * Get a relationship between two nodes, 
+	 * if exist or no. While getting the relationship
+	 * update the property of the relationsip in case 
+	 * there is an revalue of properties(weight) 
 	 * 
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param start   Start ID
@@ -221,25 +214,57 @@ public class Neo4jAlUtils {
 	 * @return An optional of the relationship
 	 * @throws Neo4jQueryException
 	 */
-	/* 
-	public static Optional<Relationship> getRelationshipType(Neo4jAl neo4jAl, List<String> start, List<String> end , Double weight)
+	public static Optional<Relationship> findRelationship(Neo4jAl neo4jAl, String start, String end)
 			throws Neo4jQueryException {
-		String req = String.format("MATCH (a : `%s` {`%s` : '%s'})-[r:`%s`]->(b:`%s` {`%s` : '%s'}) " +
-				"RETURN r as relationship", Shared.DEF_NODE_LABELS, Shared.NODE_PROPERTY_TYPE, start, Shared.RELATIONSHIP_PROP_TYPE, 
-				 Shared.DEF_NODE_LABELS, Shared.NODE_PROPERTY_TYPE,end);
+		String req = String.format("MATCH (a : `%s` {`%s` : '%s'})-[r:`%s`]->(b:`%s` {`%s` : '%s'}) "  +
+				"RETURN r as relationship", NODE_LABELS, NODE_PROP_TYPE, start, RELATIONSHIP_PROP_TYPE,
+				 NODE_LABELS, NODE_PROP_TYPE,end);
+	
+		 neo4jAl.info(req); 
+ 
+		 try {
+			 Result res = neo4jAl.executeQuery(req);
+		 
+			 if (res.hasNext())
+				 return Optional.ofNullable((Relationship) res.next().get("relationship"));
+			 else
+				 return Optional.empty();
+ 
+				 
+		 } catch (Exception e) {
+			 neo4jAl.error("Failed to get the relationship.", e);
+			 throw new Neo4jQueryException("Failed to get the relationship", e, "NEO4JUTILS");
+		 }
+	}
+
+
+	
+	/**
+	 * [modified]
+	 * Get a relationship between two nodes, 
+	 * if exist or no. While getting the relationship
+	 * update the property of the relationsip in case 
+	 * there is an revalue of properties(weight) 
+	 * 
+	 * @param neo4jAl Neo4j Access Layer
+	 * @param start   Start ID
+	 * @param end     End ID
+	 * @param weight 
+	 * @return An optional of the relationship
+	 * @throws Neo4jQueryException
+	 */
+	public static Optional<Relationship> getRelationshipTypeUpdate(Neo4jAl neo4jAl, String start, String end , String weight)
+			throws Neo4jQueryException {
+		String req = String.format("MATCH (a : `%s` {`%s` : '%s'})-[r:`%s`]->(b:`%s` {`%s` : '%s'}) SET r.`%s` = '%s' "  +
+				"RETURN r as relationship", NODE_LABELS, NODE_PROP_TYPE, start, RELATIONSHIP_PROP_TYPE,
+				 NODE_LABELS, NODE_PROP_TYPE,end,
+				 RELATIONSHIP_PROP_VALUE, weight);
 		
 		neo4jAl.info(req); 
 
 		try {
 			Result res = neo4jAl.executeQuery(req);
-			if (!res.hasNext()){
-
-				return Optional.empty(); 
-			}
-			else{
-				return Optional.ofNullable((Relationship) res.next().get("relationship"));
-			}
-			/* 
+		
 			if (res.hasNext())
 				return Optional.ofNullable((Relationship) res.next().get("relationship"));
 			else
@@ -252,11 +277,12 @@ public class Neo4jAlUtils {
 		}
 	}
 
-	*/
-
-	
 	/**
-	 * Get a relationship
+	 * [modified]
+	 * Get a relationship between two nodes, 
+	 * if exist or no. While getting the relationship
+	 * update the property of the relationsip in case 
+	 * there is an revalue of properties(weight) 
 	 * 
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param start   Start ID
@@ -265,11 +291,12 @@ public class Neo4jAlUtils {
 	 * @return An optional of the relationship
 	 * @throws Neo4jQueryException
 	 */
-	public static Optional<Relationship> getRelationshipType(Neo4jAl neo4jAl, String start, String end , Double weight)
+	public static Optional<Relationship> getRelationshipTypeUp(Neo4jAl neo4jAl, String start, String end , String weight)
 			throws Neo4jQueryException {
-		String req = String.format("MATCH (a : `%s` {`%s` : '%s'})-[r:`%s`]->(b:`%s` {`%s` : '%s'})  SET r.`%s` = %f "  +
-				"RETURN r as relationship", Shared.DEF_NODE_LABELS, Shared.NODE_PROPERTY_TYPE, start, Shared.RELATIONSHIP_PROP_TYPE,
-				 Shared.DEF_NODE_LABELS, Shared.NODE_PROPERTY_TYPE,end, Shared.RELATIONSHIP_PROP_VALUE, weight);
+		String req = String.format("MATCH (a : `%s` {`%s` : '%s'})-[r:`%s`]->(b:`%s` {`%s` : '%s'}) SET r.`%s` = NULL "  +
+				"RETURN r as relationship", NODE_LABELS,NODE_PROP_TYPE, start,RELATIONSHIP_PROP_TYPE,
+				 NODE_LABELS, NODE_PROP_TYPE,end,
+				 RELATIONSHIP_PROP_VALUE);
 		
 		neo4jAl.info(req); 
 
@@ -292,19 +319,22 @@ public class Neo4jAlUtils {
 	/**
 	 * [modified]
 	 * Create a relationship
-	 * 
+	 * Only when the weight value between node is not equal to the 
+	 * default value and have no relationship. 
+	 * [renaming of the node will create a new node, but still want to 
+	 * mantain the relationshp previously before the node was renamed ]
 	 * @param neo4jAl    Neo4j Access Layer
-	 * @param start      Start ID
-	 * @param end        End id
+	 * @param start      Start node
+	 * @param end        End node
 	 * @param weight 
 	 * @return
 	 */
-	public static Relationship createRelationshipType(Neo4jAl neo4jAl, String start, String end, Double weight) throws Neo4jQueryException {
+	public static Relationship createRelationshipWeight(Neo4jAl neo4jAl, String start, String end, String weight) throws Neo4jQueryException {
 		// Create the relationship
 		String req = String.format("MATCH (a : `%s` {`%s` : '%s'}), (b:`%s` {`%s` : '%s'})" +
-				"MERGE (a)-[r:`%s`{`%s`: %f}]->(b) " +
-				"RETURN r as relationship ", Shared.DEF_NODE_LABELS, Shared.NODE_PROPERTY_TYPE, start, Shared.DEF_NODE_LABELS, Shared.NODE_PROPERTY_TYPE,
-				end, Shared.RELATIONSHIP_PROP_TYPE, Shared.RELATIONSHIP_PROP_VALUE, weight );
+				"MERGE (a)-[r:`%s`{`%s`: '%s'}]->(b) " +
+				"RETURN r as relationship ", NODE_LABELS, NODE_PROP_TYPE, start, NODE_LABELS, NODE_PROP_TYPE,
+				end, RELATIONSHIP_PROP_TYPE, RELATIONSHIP_PROP_VALUE, weight );
 
 		neo4jAl.info(req); 
 		neo4jAl.info(String.format("weight2: %s", weight.toString())); 
@@ -317,48 +347,25 @@ public class Neo4jAlUtils {
 
 			neo4jAl.info(String.format("weight: %s", weight.toString()));
 
-			
-			if(weight != Shared.DEF_WEIGHT){
+	
+			res = neo4jAl.executeQuery(req);
 
-				res = neo4jAl.executeQuery(req);
+			if(!res.hasNext()){
 
-				if(!res.hasNext()){
+				throw new Error("Failed to create the relationship. No return resulted"); 
+			}
 
-					throw new Error("Failed to create the relationship. No return resulted"); 
-				}
+
+			else{
 
 				rel = (Relationship) res.next().get("relationship"); 
 
 				neo4jAl.info(rel.toString()); 
 
 			}
-
-			else {
-				
-				rel = null; 
-				
-			}
+			
 
 			return rel; 
-
-			
-
-			/* 
-			Result res = neo4jAl.executeQuery(req);
-			if (!res.hasNext())
-				throw new Error("Failed to create the relationship. No return resulted.");
-
-			Relationship rel = (Relationship) res.next().get("relationship");
-			
-			/* 
-			// Apply properties
-			for (Map.Entry<String, Object> l : properties.entrySet()) {
-				rel.setProperty(l.getKey(), l.getValue());
-			}
-			
-
-			return rel;
-			*/
 
 		} catch (Exception | Neo4jQueryException e) {
 			neo4jAl.error("Failed to get the relationship.", e);
@@ -366,10 +373,68 @@ public class Neo4jAlUtils {
 		}
 	}
 
+	/**
+	 * [modified]
+	 * Create a relationship
+	 * Only when the weight value between node is not equal to the 
+	 * default value and have no relationship. 
+	 * [renaming of the node will create a new node, but still want to 
+	 * mantain the relationshp previously before the node was renamed ]
+	 * @param neo4jAl    Neo4j Access Layer
+	 * @param start      Start node
+	 * @param end        End node
+	 * @param weight 
+	 * @return
+	 */
+	public static Relationship createRelationshipType(Neo4jAl neo4jAl, String start, String end) throws Neo4jQueryException {
+		// Create the relationship
+		String req = String.format("MATCH (a : `%s` {`%s` : '%s'}), (b:`%s` {`%s` : '%s'})" +
+				"MERGE (a)-[r:`%s`]->(b) " +
+				"RETURN r as relationship ", NODE_LABELS, NODE_PROP_TYPE, start, NODE_LABELS, NODE_PROP_TYPE,
+				end, RELATIONSHIP_PROP_TYPE, RELATIONSHIP_PROP_VALUE);
+
+		neo4jAl.info(req); 
+		//neo4jAl.info(String.format("weight2: %s", weight.toString())); 
+
+		try {
+
+			Result res; 
+
+			Relationship rel = null; 
+
+			//neo4jAl.info(String.format("weight: %s", weight.toString()));
+
+	
+			res = neo4jAl.executeQuery(req);
+
+			if(!res.hasNext()){
+
+				throw new Error("Failed to create the relationship. No return resulted"); 
+			}
+
+
+			else{
+
+				rel = (Relationship) res.next().get("relationship"); 
+
+				neo4jAl.info(rel.toString()); 
+
+			}
+			
+
+			return rel; 
+
+		} catch (Exception | Neo4jQueryException e) {
+			neo4jAl.error("Failed to get the relationship.", e);
+			throw new Neo4jQueryException("Failed to get the relationship", e, "NEO4JUTILS");
+		}
+	}
+
+
  
 
 	/**
-	 * [modified]
+	 * 
 	 * Create a relationship
 	 * 
 	 * @param neo4jAl    Neo4j Access Layer
@@ -407,6 +472,77 @@ public class Neo4jAlUtils {
 			neo4jAl.error("Failed to get the relationship.", e);
 			throw new Neo4jQueryException("Failed to get the relationship", e, "NEO4JUTILS");
 		}
+	}
+
+
+
+	/**
+	 * [modified]
+	 * Get the name of the nodes thar exist in 
+	 * a specific label 
+	 * 
+	 * @param neo4jAl    Neo4j Access Layer
+	 * @param type       Type of the relationship
+	 * @param start      Start ID
+	 * @param end        End id
+	 * @param properties List of properties
+	 * @return
+	 */
+	public static List<String> getNodes(Neo4jAl neo4jAl) throws Neo4jQueryException {
+		// Create the relationship
+		String req = String.format("MATCH (n:%s) UNWIND n.name AS name RETURN collect(DISTINCT name) as name ", NODE_LABELS);
+		
+		neo4jAl.info(req); 
+
+		try{
+
+			Result result = neo4jAl.executeQuery(req);
+			neo4jAl.info(String.format("result: [%s]", result));
+			if(!result.hasNext()) return new ArrayList<>();
+
+			else return ((List<String>) result.next().get("name")).stream().sorted().collect(Collectors.toList()); 		
+			
+		} catch (Neo4jQueryException e) {
+			neo4jAl.error(String.format("Failed to get the list of node"), e);
+			throw new Error("Failed to get label's types");
+		}
+
+
+	}
+
+	/**
+	 * [modified]
+	 * Delete specific nodes with its 
+	 * corresponding relationship 
+	 * 
+	 * @param neo4jAl
+	 * @param name
+	 * @return
+	 * @throws Neo4jQueryException
+	 */
+
+	public static List<String> deleteNodes(Neo4jAl neo4jAl, String name) throws Neo4jQueryException {
+
+		String req = String.format("MATCH (n:%s{name: '%s'}) DETACH DELETE n", NODE_LABELS, name );
+		
+		neo4jAl.info(req); 
+
+		try{
+
+			Result result = neo4jAl.executeQuery(req);
+			neo4jAl.info(String.format("result: [%s]", result));
+			if(!result.hasNext()) return new ArrayList<>();
+	
+			else return ((List<String>) result.next()); 
+		
+			
+			
+		} catch (Neo4jQueryException e) {
+			neo4jAl.error(String.format("Failed to delete the previously existing nodes"), e);
+			throw new Error("Failed to delete the nodes");
+		}
+
+
 	}
 
 }

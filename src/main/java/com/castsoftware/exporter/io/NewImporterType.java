@@ -236,6 +236,8 @@ public class NewImporterType {
 	public void load(String path) throws Exception {
 		Path zipPath = Path.of(path);
 
+		//String query = "LOAD CSV FROM \"" + zipPath + "\" AS node WITH collect(node[0]) AS whitelist MATCH (n:%s) WHERE NOT n.name IN whitelist DETACH DELETE n";
+
 		// Check the existence of the Zip File
 		if(!Files.exists(zipPath)) {
 			throw new Exception(String.format("No zip file found at '%s'.", path));
