@@ -56,7 +56,7 @@ public class NodeRecord {
 
 	/** 
 	 * [modification]
-	 * Get the list of headers by types of nodes 
+	 * Get the list of headers by the name of nodes 
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param label 
 	 * @param prop specfic key 

@@ -208,28 +208,23 @@ public class NewExporter {
 					for(int it2 = 0; it2<headers.size(); it2++){
 	
 						List<String> relationship = RelationshipsUtils.getRelationship(neo4jAl,label, headers.get(it1),label,headers.get(it2)); 
-						neo4jAl.info(relationship.toString()); 
 						rels =  String.join(",",relationship);
-
-						neo4jAl.info(String.format("rels: %s", rels)); 
 
 						if(rels.equals("NULL")){
 
 							newRow.addAll(relationship); 
-							neo4jAl.info(newRow.toString());
+			
 						}
 
 						else if(rels.equals("EXIST")){
-							
+
 							newRow.addAll(RelationshipsUtils.getRelationshipWeight(neo4jAl,label,headers.get(it1),label,headers.get(it2)));
-							neo4jAl.info(newRow.toString());
 
 						}
 						
 					}
 
 					printer.writeNext(newRow.toArray(new String[0]));
-					//neo4jAl.info(String.format("newRow: [%s]", String.join(",", newRow)));
 
 				}
 				
@@ -247,7 +242,6 @@ public class NewExporter {
 		}
 	}
 	
-
 
 	/**
 	 * Export a specific label to a specified path and return the list of files ( node + relationships ) created

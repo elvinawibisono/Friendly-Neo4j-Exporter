@@ -75,10 +75,9 @@ public class NodeDeserializer {
 		return n; 
 	}
 
-
 	/**
 	 * [modified]
-	 * Create a node from a list of values
+	 * Create nodes based on the header of the csv file
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param values header 
 	 */
@@ -96,10 +95,6 @@ public class NodeDeserializer {
 
 			header.add(values.get(i)); 
 
-			//header.add(values.get(i).substring(1, values.get(i).length()-1)); 
-
-			//List<String> lheader = Neo4jTypeMapper.getAsStringList(header);
-
 			neo4jAl.info(header.toString()); 
 
 			sHeader = String.join(",",header); 
@@ -107,16 +102,10 @@ public class NodeDeserializer {
 			nodeOptional = Neo4jAlUtils.getNodeType(neo4jAl, sHeader);
 
 			n = nodeOptional.get();
-
-
 			
 		}
 
-
 		return n; 
-
-
-
 
 	}
 

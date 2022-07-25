@@ -29,8 +29,6 @@ public class RelationshipDeserializer {
 	private static final String RELATIONSHIP_PROP_VALUE = getConfigValues.Property.RELATIONSHP_PROP_VALUE.toString();
 	private static final String RELATIONSHIP_PROP_TYPE = getConfigValues.Property.RELATIONSHIP_PROP_TYPE.toString(); 
 	private static final String NODE_LABELS = getConfigValues.Property.NODE_LABELS.toString(); 
-
-
 	
 
 	/**
@@ -74,14 +72,15 @@ public class RelationshipDeserializer {
 
 
 	/**
-	 * Create a node from a list of values
+	 * get or create relationship based on 
+	 * the csv file data 
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param headers Headers
 	 * @param values Values
 	 * @return
 	 */
 	public static Relationship mergeRelationshipType(Neo4jAl neo4jAl, List<String> headers, List<String> values) throws Neo4jQueryException, Exception {
-
+	
 		List<String>end = new ArrayList<>(); 
 		List<String>start = new ArrayList<>(); 
 
@@ -94,7 +93,6 @@ public class RelationshipDeserializer {
 		neo4jAl.info(headers.toString()); 
 
 		Relationship r = null; 
-
 
 		try{
 
@@ -113,22 +111,9 @@ public class RelationshipDeserializer {
 	
 				weight =values.get(j);
 	
-				
-				
-				neo4jAl.info(String.format("start : `%s`" , String.join(",", start.toString())));  
-	
-				neo4jAl.info(String.format("end : `%s`" , String.join(",", end.toString()))); 
-	
-				neo4jAl.info(String.valueOf(weight));
-	
-				neo4jAl.info(String.valueOf(headers.size())); 
-	
-				neo4jAl.info(String.valueOf(values.size())); 
-
 				Optional<Relationship> relationshipPresent= Neo4jAlUtils.findRelationship(neo4jAl, source, sEnd);
 
 				if(relationshipPresent.isPresent()){
-
 
 					if(weight.equals(NO_RELATIONSHIP_WEIGHT)){
 
@@ -143,48 +128,15 @@ public class RelationshipDeserializer {
 						r = updateRelsWeight.get(); 
 					}
 				}
-
-
-						
-				
-				/* 
-				
-				Optional<Relationship> relationshipOptional = Neo4jAlUtils.getRelationshipType(neo4jAl, source, sEnd, weight);
-	
-				neo4jAl.info(relationshipOptional.toString()); 
-				neo4jAl.info(String.format("weight1: %s", weight)); 
-	
-				neo4jAl.info(String.format("hello: %s", Optional.empty()));
-	
-				if(relationshipOptional.isPresent()){
-	
-					r = relationshipOptional.get(); 
-				}
-
-				*/ 
-	
-	
-				neo4jAl.info(String.format("weight you: %s", weight)); 
-				//neo4jAl.info(String.format("def weight: %s", Shared.DEF_WEIGHT)); 
-	
 		
 				if(Optional.empty().toString().equals("Optional.empty")){
-				//	neo4jAl.info(String.format("boolean 1: %s", (Double.valueOf(weight) == Shared.DEF_WEIGHT))); 
-					
-					//neo4jAl.info(String.format("boolean 2: %s", (weight == Shared.DEF_WEIGHT)));
-	
-					//neo4jAl.info(String.format("boolean 3: %s", (weight.toStriShared.DEF_WEIGHT))));
 	
 					if (String.valueOf(weight).equals(NO_RELATIONSHIP)) {
-							
-						neo4jAl.info(String.format("weight in: %s ", weight.toString())); 
+		
 						r = null;					
 					}
 					else if(String.valueOf(weight).equals(NO_RELATIONSHIP_WEIGHT)) {
 
-						//weight = null; 
-						neo4jAl.info(String.format("weight out: %s ", weight.toString())); 
-	
 						r = Neo4jAlUtils.createRelationshipType(neo4jAl, source, sEnd); 
 			
 					}
@@ -198,152 +150,50 @@ public class RelationshipDeserializer {
 			}
 	
 			updateNode(neo4jAl, lheaders);
-	
 			return r; 
 
-
-
 		}catch(NumberFormatException e){
-
 			neo4jAl.error(String.format("Wrong Cast Type. Please use Number Types"),e);
 			throw new Error("Fail to get the weight of relationship");
 		}catch(NullPointerException e){
-
 			neo4jAl.error(String.format("Null Type"),e);
 			throw new Error("Null Type");
 
 		}
+	}
 	
+	/**
+	 * [modified]
+	 * Deleting the nodes that are not present in the csv file 
+	 * but present in the neo4j dataset 
+	 * @param neo4jAl
+	 * @param header
+	 * @throws Neo4jQueryException
+	 */
 
-		}
-	
-	
-		/* 
-				
-		for (int j = 1; j<headers.size(); j++){
-
-			neo4jAl.info(values.toString());
-			lheaders.add(headers.get(j)); 
-
-			start = new ArrayList<>(); 
-			start.add(values.get(0).toString());	
-			source = String.join(",", start); 
-
-			end = new ArrayList<>(); 
-			end.add(headers.get(j).toString()); 
-			sEnd = String.join(",", end); 
-
-			weight =Double.valueOf(values.get(j));
-
-			
-			
-			neo4jAl.info(String.format("start : `%s`" , String.join(",", start.toString())));  
-
-			neo4jAl.info(String.format("end : `%s`" , String.join(",", end.toString()))); 
-
-			neo4jAl.info(String.valueOf(weight));
-
-			neo4jAl.info(String.valueOf(headers.size())); 
-
-			neo4jAl.info(String.valueOf(values.size())); 
-					
-				
-			
-			Optional<Relationship> relationshipOptional = Neo4jAlUtils.getRelationshipType(neo4jAl, source, sEnd, weight);
-
-			neo4jAl.info(relationshipOptional.toString()); 
-			neo4jAl.info(String.format("weight1: %s", weight)); 
-
-			neo4jAl.info(String.format("hello: %s", Optional.empty()));
-
-			if(relationshipOptional.isPresent()){
-
-				r = relationshipOptional.get(); 
-			}
-
-
-			neo4jAl.info(String.format("weight you: %s", weight)); 
-			neo4jAl.info(String.format("def weight: %s", Shared.DEF_WEIGHT)); 
-
-	
-			if(Optional.empty().toString().equals("Optional.empty")){
-				neo4jAl.info(String.format("boolean 1: %s", (Double.valueOf(weight) == Shared.DEF_WEIGHT))); 
-				
-				neo4jAl.info(String.format("boolean 2: %s", (weight == Shared.DEF_WEIGHT)));
-
-				//neo4jAl.info(String.format("boolean 3: %s", (weight.toStriShared.DEF_WEIGHT))));
-
-				if (String.valueOf(weight).equals(String.valueOf(Shared.DEF_WEIGHT))) {
-						
-					neo4jAl.info(String.format("weight in: %s ", weight.toString())); 
-					r = null;					
-				}
-				else {
-					neo4jAl.info(String.format("weight out: %s ", weight.toString())); 
-
-					r = Neo4jAlUtils.createRelationshipType(neo4jAl, source, sEnd, weight); 
+	public static void updateNode(Neo4jAl neo4jAl, List<String> header) throws Neo4jQueryException{
 		
+		List<String>newNode = Neo4jAlUtils.getNodes(neo4jAl); 
+		List<String> elements;
+		String node; 
+
+
+			for(int j =0; j<newNode.size(); j++){
+
+				if (!header.contains(newNode.get(j))) {
+
+					elements = new ArrayList<>(); 
+
+					elements.add(newNode.get(j));
+
+					node = String.join(",", elements);
+
+					Neo4jAlUtils.deleteNodes(neo4jAl, node); 
+
+
 				}
-				
 			}
-
-		}
-
-		updateNode(neo4jAl, lheaders);
-
-		return r; 
-
-		
-
-		}
-		*/
-
-
-
-
-
-
-		/**
-		 * [modified]
-		 * Deleting the nodes that are not present in the csv file 
-		 * but present in the neo4j dataset 
-		 * @param neo4jAl
-		 * @param header
-		 * @throws Neo4jQueryException
-		 */
-
-		public static void updateNode(Neo4jAl neo4jAl, List<String> header) throws Neo4jQueryException{
-			
-			List<String>newNode = Neo4jAlUtils.getNodes(neo4jAl); 
-			List<String> elements;
-			String node; 
-
-
-				for(int j =0; j<newNode.size(); j++){
-
-					if (!header.contains(newNode.get(j))) {
-
-						elements = new ArrayList<>(); 
-
-						elements.add(newNode.get(j));
-
-						neo4jAl.info(String.format("element : %s", elements)); 
-
-						node = String.join(",", elements);
-
-						Neo4jAlUtils.deleteNodes(neo4jAl, node); 
-
-
-					}
-				}
-
-
-
-		}
-
-
-
-
+	}
 
 	}
 

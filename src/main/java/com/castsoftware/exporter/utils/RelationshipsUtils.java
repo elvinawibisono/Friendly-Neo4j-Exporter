@@ -126,9 +126,6 @@ public class RelationshipsUtils {
 		}
 	}
 
-
-
-
 	/**
 	 * [modified]
 	 * Get the list of relationship type for a label
@@ -144,75 +141,30 @@ public class RelationshipsUtils {
 
 		List<String>relsWeight = new ArrayList<>(); 
 
-		
-
 		String request = String.format("MATCH (a : `%s` { %s :'%s'})-[r]->(b:`%s`{%s:'%s'})  RETURN CASE WHEN r.weight IS NULL then '%s' ELSE r.weight END as weight LIMIT 1",label1,
 											NODE_PROP_TYPE, type1,label2, NODE_PROP_TYPE, type2, NO_RELATIONSHIP_WEIGHT);
 
-
 		
 		neo4jAl.info(request);
-
-		//String request = String.format("MATCH  (a : `%s`)-[r]->(b:`%s`) RETURN CASE WHEN r. weight IS NULL then $DEF_WEIGHT ELSE r.weight END as weight",label1,
-		//									label2, Shared.DEF_WEIGHT);
 			
 		try {
 			Result result = neo4jAl.executeQuery(request); 
-			//Result result = neo4jAl.executeQuery(request, Map.of("DEF_WEIGHT",2));
-			//neo4jAl.info(result.next().get("weight").toString());
-			
-			//secure the input 
-			//retrieve the information result stori in differnet varaibes
-			//check result set with varaible 
-			//retrieve result.nextget key instance
-			// save cast 
-			//dont combine into unique line
-
 
 			if(!result.hasNext()){
 				
-				
 				return new ArrayList<>();
 
-			}
-
-			//Doublweight = 0.0;
-
-			//Iterator<Long>iter = 		
+			}		
 			
 			while(result.hasNext()){
 			
 				String results = String.valueOf( result.next().get("weight"));
 				relsWeight = Arrays.asList(results); 
 
-				
-
-				/*
-
-				if( results instanceof Long){
-
-					weight  = ((Long) results).doubleValue();		
-				}
-
-				if(results instanceof Integer){
-
-					weight = ((Integer) results).doubleValue(); 
-			
-				}
-
-				if (results instanceof Double){
-
-					weight = ((Double) results); 
-				}
-				*/
-
-
-
 			}
 
 			return relsWeight;
 
-
 		} catch (ClassCastException e){
 			neo4jAl.error(String.format("Wrong Cast Type. Please use Number Types"),e);
 			throw new Error("Fail to get the weight of relationship");
@@ -222,106 +174,10 @@ public class RelationshipsUtils {
 			throw new Error("Failed to get the weight");
 
 		}
-	
 		
 	}
 
-
-	/*
-	 * [modified]
-	 * Get the list of relationship type for a label
-	 * @param neo4jAl Neo4j Access Layer
-	 * @param label1
-	 * @param label2
-	 * @param type1
-	 * @param type2
-	 * @return The list of values as object
-	 */
-
-	 /* 
-	
-	public static Double getRelationshipWeight(Neo4jAl neo4jAl,String label2,String type1, String label1, String type2 ) {
-
-		
-
-		String request = String.format("MATCH (a : `%s` { %s :'%s'})-[r]->(b:`%s`{%s:'%s'})  RETURN CASE WHEN r.weight IS NULL then '%s' ELSE r.weight END as weight LIMIT 1",label1,
-											Shared.NODE_PROPERTY_TYPE, type1,label2, Shared.NODE_PROPERTY_TYPE, type2, Shared.NO_RELATIONSHIP_WEIGHT);
-
-		
-		neo4jAl.info(request);
-
-		//String request = String.format("MATCH  (a : `%s`)-[r]->(b:`%s`) RETURN CASE WHEN r. weight IS NULL then $DEF_WEIGHT ELSE r.weight END as weight",label1,
-		//									label2, Shared.DEF_WEIGHT);
-			
-		try {
-			Result result = neo4jAl.executeQuery(request); 
-			//Result result = neo4jAl.executeQuery(request, Map.of("DEF_WEIGHT",2));
-			//neo4jAl.info(result.next().get("weight").toString());
-			
-			//secure the input 
-			//retrieve the information result stori in differnet varaibes
-			//check result set with varaible 
-			//retrieve result.nextget key instance
-			// save cast 
-			//dont combine into unique line
-
-
-			if(!result.hasNext()){
-				
-				
-				return Shared.DEF_WEIGHT;
-
-			}
-
-			Double weight = 0.0;
-
-			//Iterator<Long>iter = 		
-			
-			while(result.hasNext()){
-			
-				Object results = result.next().get("weight");
-
-				if( results instanceof Long){
-
-					weight  = ((Long) results).doubleValue();		
-				}
-
-				if(results instanceof Integer){
-
-					weight = ((Integer) results).doubleValue(); 
-			
-				}
-
-				if (results instanceof Double){
-
-					weight = ((Double) results); 
-				}
-
-
-			}
-
-			return weight;
-
-
-		} catch (ClassCastException e){
-			neo4jAl.error(String.format("Wrong Cast Type. Please use Number Types"),e);
-			throw new Error("Fail to get the weight of relationship");
-		
-		} catch (Neo4jQueryException e) {
-			neo4jAl.error(String.format("Failed to get the weight list of relationships for label"), e);
-			throw new Error("Failed to get the weight");
-
-		}
-	
-		
-	}
-
-	*/
-	
 	/**
-	 * TODO Serialize this call to another file
-	 * Replace the calls in the other files 
-	 * Decomission this method 
 	 * Get the list of values for a specific node
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param n Node to check
@@ -334,10 +190,6 @@ public class RelationshipsUtils {
 			Object it; 
 			for (String k : keys) { // Parse the keys
 				it = n.hasProperty(k) ? n.getProperty(k) : null;
-                // Entry Object to compare to find the type if primitive object serializable 
-
-				// Call utils serialize LIST 
-				// Check hos the lists are deserialized to make sure the format is compliant 
 				
 				values.add(it);
 			}

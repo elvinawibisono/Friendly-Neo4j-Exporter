@@ -93,16 +93,14 @@ public class Neo4jAlUtils {
 	}
 
 	/**
-	 * [modified]
+	 * [modification]
 	 * Find the node if exist and create a node if not exist 
-	 * using the label and the name of the node
-	 * using MERGE
+	 * use MERGE to match and create node 
 	 * @param neo4jAl
 	 * @param headers
 	 * @return
 	 * @throws Neo4jQueryException
 	 */
-
 	public static Optional<Node>getNodeType(Neo4jAl neo4jAl, String headers) throws Neo4jQueryException{
 		String req = String.format("MERGE (o: `%s` {%s: '%s'})  RETURN o as node", NODE_LABELS, NODE_PROP_TYPE, headers ); 
 
@@ -119,7 +117,13 @@ public class Neo4jAlUtils {
 		
 	}
 
-	
+	/**
+	 * 
+	 * @param neo4jAl
+	 * @param ids
+	 * @return
+	 * @throws Neo4jQueryException
+	 */
 	public static Map<String, List<Node>> sortNodesByLabel(Neo4jAl neo4jAl, List<Long> ids) throws Neo4jQueryException {
 		Map<String, List<Node>> returnMap = new HashMap<>();
 		String req = "MATCH (o) WHERE ID(o) IN $idList " +
@@ -201,11 +205,8 @@ public class Neo4jAlUtils {
 
 
 	/**
-	 * [modified]
-	 * Get a relationship between two nodes, 
-	 * if exist or no. While getting the relationship
-	 * update the property of the relationsip in case 
-	 * there is an revalue of properties(weight) 
+	 * [modification]
+	 * find the relationship in the neo4j dataset
 	 * 
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param start   Start ID
@@ -241,10 +242,8 @@ public class Neo4jAlUtils {
 	
 	/**
 	 * [modified]
-	 * Get a relationship between two nodes, 
-	 * if exist or no. While getting the relationship
-	 * update the property of the relationsip in case 
-	 * there is an revalue of properties(weight) 
+	 * if a relationship exist and weight value 
+	 * exist. Update the weight value of the relationship
 	 * 
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param start   Start ID
@@ -279,10 +278,8 @@ public class Neo4jAlUtils {
 
 	/**
 	 * [modified]
-	 * Get a relationship between two nodes, 
-	 * if exist or no. While getting the relationship
-	 * update the property of the relationsip in case 
-	 * there is an revalue of properties(weight) 
+	 * If the a relationship exist but weight value is unknown or (NW)
+	 * Update the weight value as NULL
 	 * 
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param start   Start ID
@@ -318,11 +315,11 @@ public class Neo4jAlUtils {
 
 	/**
 	 * [modified]
-	 * Create a relationship
-	 * Only when the weight value between node is not equal to the 
-	 * default value and have no relationship. 
-	 * [renaming of the node will create a new node, but still want to 
-	 * mantain the relationshp previously before the node was renamed ]
+	 * Specific query where it 
+	 * creates a new relationship, when a relationship 
+	 * does not exist but have weight value 
+	 * Case used when a node is renamed and want to preserve 
+	 * previous relationship 
 	 * @param neo4jAl    Neo4j Access Layer
 	 * @param start      Start node
 	 * @param end        End node
@@ -375,11 +372,10 @@ public class Neo4jAlUtils {
 
 	/**
 	 * [modified]
-	 * Create a relationship
-	 * Only when the weight value between node is not equal to the 
-	 * default value and have no relationship. 
-	 * [renaming of the node will create a new node, but still want to 
-	 * mantain the relationshp previously before the node was renamed ]
+	 * Create relationship if weight is 'NW', 
+	 * relationhip exist but no weight value
+	 * query used when the nodes are renamed and want 
+	 * to preserve the previous relationship 
 	 * @param neo4jAl    Neo4j Access Layer
 	 * @param start      Start node
 	 * @param end        End node
@@ -394,7 +390,6 @@ public class Neo4jAlUtils {
 				end, RELATIONSHIP_PROP_TYPE, RELATIONSHIP_PROP_VALUE);
 
 		neo4jAl.info(req); 
-		//neo4jAl.info(String.format("weight2: %s", weight.toString())); 
 
 		try {
 
@@ -402,16 +397,12 @@ public class Neo4jAlUtils {
 
 			Relationship rel = null; 
 
-			//neo4jAl.info(String.format("weight: %s", weight.toString()));
-
-	
 			res = neo4jAl.executeQuery(req);
 
 			if(!res.hasNext()){
 
 				throw new Error("Failed to create the relationship. No return resulted"); 
 			}
-
 
 			else{
 
@@ -421,7 +412,6 @@ public class Neo4jAlUtils {
 
 			}
 			
-
 			return rel; 
 
 		} catch (Exception | Neo4jQueryException e) {
@@ -429,9 +419,6 @@ public class Neo4jAlUtils {
 			throw new Neo4jQueryException("Failed to get the relationship", e, "NEO4JUTILS");
 		}
 	}
-
-
- 
 
 	/**
 	 * 
@@ -478,8 +465,8 @@ public class Neo4jAlUtils {
 
 	/**
 	 * [modified]
-	 * Get the name of the nodes thar exist in 
-	 * a specific label 
+	 * Get the name of the nodes of a specific label 
+	 * exist in a Neo4j datast 
 	 * 
 	 * @param neo4jAl    Neo4j Access Layer
 	 * @param type       Type of the relationship
@@ -489,7 +476,7 @@ public class Neo4jAlUtils {
 	 * @return
 	 */
 	public static List<String> getNodes(Neo4jAl neo4jAl) throws Neo4jQueryException {
-		// Create the relationship
+		
 		String req = String.format("MATCH (n:%s) UNWIND n.name AS name RETURN collect(DISTINCT name) as name ", NODE_LABELS);
 		
 		neo4jAl.info(req); 
@@ -512,15 +499,14 @@ public class Neo4jAlUtils {
 
 	/**
 	 * [modified]
-	 * Delete specific nodes with its 
-	 * corresponding relationship 
+	 * Delete nodes in the neo4j dataset 
+	 * that does not exist in the csv file
 	 * 
 	 * @param neo4jAl
 	 * @param name
 	 * @return
 	 * @throws Neo4jQueryException
 	 */
-
 	public static List<String> deleteNodes(Neo4jAl neo4jAl, String name) throws Neo4jQueryException {
 
 		String req = String.format("MATCH (n:%s{name: '%s'}) DETACH DELETE n", NODE_LABELS, name );

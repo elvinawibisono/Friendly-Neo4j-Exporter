@@ -15,8 +15,6 @@ import java.util.stream.StreamSupport;
 
 public class NodesUtils {
 
-
-
 	/**
 	 * Get the list of properties for a label
 	 * @param neo4jAl Neo4j Access Layer
@@ -81,8 +79,7 @@ public class NodesUtils {
 
 	/**
 	 * [modification]
-	 * 	
-	 * Get specific list of node's type for a specific label
+	 * Get specific list of node's type from a specific label
 	 * @param neo4jAl Neo4j Access Layer
 	 * @param props Keys to validate 
 	 */
@@ -96,16 +93,7 @@ public class NodesUtils {
 			Result result = neo4jAl.executeQuery(request);
 			neo4jAl.info(String.format("result: [%s]", result));
 			if(!result.hasNext()) return new ArrayList<>();
-			//error line 96, query returns a column of output instead of an array
-			//convert the result to an array in case the query returns only one column 
 			else return ((List<String>) result.next().get("type")).stream().sorted().collect(Collectors.toList()); 
-			//else return StreamSupport stream; ->> doublecheck 
-			//if(result.next().get("types") instanceof String){
-			//	return ((List<String>) result).stream().map(s-> new String[] { s }).sorted().collect(Collectors.toList()); 
-			//}
-
-			//convert the column result to an arraylist 
-			
 			
 		} catch (Neo4jQueryException e) {
 			neo4jAl.error(String.format("Failed to get the list of types,'%s', for the label '%s'", props,label), e);
@@ -113,8 +101,6 @@ public class NodesUtils {
 		}
 
 		}
-
-
 
 	 }
 

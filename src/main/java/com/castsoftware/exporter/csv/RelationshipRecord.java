@@ -70,15 +70,4 @@ public class RelationshipRecord {
 		return headers;
 	}
 
-
-
-	public static List<String> getTypeHeaders(Neo4jAl neo4jAl, String type) {
-		List<String> headers = new ArrayList<>();
-		headers.add(Shared.RELATIONSHIP_TYPE);
-		headers.addAll(RelationshipsUtils.getKeysByType(neo4jAl, type));
-		return headers;
-	}
-	
-	
-
 }

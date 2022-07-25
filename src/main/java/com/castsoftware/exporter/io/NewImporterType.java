@@ -29,7 +29,6 @@ public class NewImporterType {
 	private static final String RELATIONSHIP_PREFIX = IOProperties.Property.PREFIX_RELATIONSHIP_FILE.toString(); // relationship
 	private static final String NODE_PREFIX = IOProperties.Property.PREFIX_NODE_FILE.toString(); // node
 
-
 	private Neo4jAl neo4jAl;
 	private String delimiter;
 
@@ -66,30 +65,10 @@ public class NewImporterType {
                 }
 
 				neo4jAl.info(String.format("Header discovered for %s : %s ", zf.getName(), String.join(", ", newHeaders)));
-				neo4jAl.info(String.valueOf(lHeaders.size())); 
-
-				/* 
-				//get the list of values of the headers 
-				List<String>values = new ArrayList<>(); 
-
-				for(int i =0; i<lHeaders.size(); i++){
-
-					values.add(Shared.NODE_PROPERTY_TYPE);
-				}
-
-				neo4jAl.info(values.toString()); 
-				neo4jAl.info(String.valueOf(values.size())); 
-
-				*/
-
-				
 				 
 				// Parse and create node
 				int success = 0;
 				int errors = 0;
-
-				//Neo4jAlUtils.getNodeType(neo4jAl, newHeaders)
-
                
                  try{
 
@@ -102,8 +81,6 @@ public class NewImporterType {
                 
                 neo4jAl.info(String.format("File %s was imported. %d Nodes created, %d errors.",  en.getName(), success, errors));
 
-              
-
 			} catch (Exception e) {
 				neo4jAl.error(String.format("An error occurred trying to process zip entry '%s'.", en.getName()), e);
 			}
@@ -113,11 +90,8 @@ public class NewImporterType {
 
 	}
 
-
-
-
 	/**
-	 * Process relationship
+	 * Process the relationship
 	 * @param entries List of Relationship Entries
 	 */
 	
@@ -155,22 +129,12 @@ public class NewImporterType {
 				while ((record = reader.readNext()) != null) {
 					elements = List.of(record);
 
-					/* 
-					neo4jAl.info(lHeaders.toString()); 
-					neo4jAl.info(String.valueOf(lHeaders.size())); 
-					neo4jAl.info(elements.toString());
-					neo4jAl.info(String.valueOf(elements.size()));  
-
-					*/
-
-					
 					try {
 						RelationshipDeserializer.mergeRelationshipType(neo4jAl, lHeaders, elements);
 						success++;
 					} catch (Neo4jQueryException e) {
 						errors++;
 					}
-
 					
 				}
 
@@ -227,7 +191,7 @@ public class NewImporterType {
 	}
 
 
-    	/**
+    /**
 	 * Load and process the node from a Zip File
 	 * @param path Path to the zip file
 	 * @return
