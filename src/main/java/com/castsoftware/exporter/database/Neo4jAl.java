@@ -123,10 +123,18 @@ public class Neo4jAl {
 
 	/**
 	 * Log information into the Neo4j Log File
-	 * @param string Message to log
+	 * @param output Message to log
 	 */
-	public void info(String string) {
-		log.info(EXPORTER_PREFIX + string);
+	public void info(String message) {
+		log.info(EXPORTER_PREFIX + message);
+	}
+
+	/**
+	 * Log info into Neo4j Map
+	 * @param output
+	 */
+	public void output(Map<String, List<String>> output){
+		log.info(EXPORTER_PREFIX + output);
 	}
 
 	/**
@@ -152,4 +160,6 @@ public class Neo4jAl {
 		this.log = log;
 		this.transaction = transaction;
 	}
+
+
 }

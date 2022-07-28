@@ -34,8 +34,6 @@ public class Neo4jAlUtils {
 			sb.add(String.format("`%s`", l));
 		}
 
-
-
 		if (sb.size() == 0)
 			return "";
 		else
