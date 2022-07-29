@@ -124,7 +124,7 @@ public class RelationshipDeserializer {
 
 					else{
 
-						Optional<Relationship> updateRelsWeight = Neo4jAlUtils.getRelationshipTypeUpdate(neo4jAl, source, sEnd, weight);
+						Optional<Relationship> updateRelsWeight = Neo4jAlUtils.getRelationshipTypeUpdate(neo4jAl, source, sEnd, Double.valueOf(weight));
 						r = updateRelsWeight.get(); 
 					}
 				}
@@ -142,7 +142,7 @@ public class RelationshipDeserializer {
 					}
 					else{
 
-						r = Neo4jAlUtils.createRelationshipWeight(neo4jAl, source, sEnd, weight); 
+						r = Neo4jAlUtils.createRelationshipWeight(neo4jAl, source, sEnd, Double.valueOf(weight)); 
 					}
 					
 				}

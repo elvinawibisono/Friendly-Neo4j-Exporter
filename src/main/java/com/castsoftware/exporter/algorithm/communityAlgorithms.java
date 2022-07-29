@@ -258,6 +258,7 @@ public class communityAlgorithms {
 
                
                 Relationship rels; 
+                
                 for (int k = 0 ; k<firstComp.size(); k++){
 
                     for(int l = 0 ; l<secondComp.size(); l++){
@@ -280,20 +281,34 @@ public class communityAlgorithms {
                             rels = null; 
                         } 
 
-                        Optional<Relationship>findRels2 = algorithmsUtils.findRelationship(neo4jAl,node_label, rels_label, firstComp.get(l), secondComp.get(k)); 
+                    }
+
+                }
+
+                Relationship rels2; 
+
+                for (int k = 0 ; k<secondComp.size(); k++){
+
+                    for(int l = 0 ; l<firstComp.size(); l++){
+
+                        neo4jAl.info(secondComp.get(k)); 
+                        neo4jAl.info(firstComp.get(l)); 
+                        
+
+
+                        Optional<Relationship>findRels2 = algorithmsUtils.findRelationship(neo4jAl,node_label, rels_label,secondComp.get(k), firstComp.get(l)); 
                         
                         if(findRels2.isPresent()){
+                           
 
-                            rels = algorithmsUtils.newRels(neo4jAl, node_label, id.get(j), id.get(k));
+                            rels2 = algorithmsUtils.newRels(neo4jAl, node_label, id.get(i), id.get(j));
                             
                         }
                             
                         else{
 
-                            rels = null; 
+                            rels2 = null; 
                         } 
-                           
-                        
 
                     }
 

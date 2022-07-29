@@ -250,9 +250,9 @@ public class Neo4jAlUtils {
 	 * @return An optional of the relationship
 	 * @throws Neo4jQueryException
 	 */
-	public static Optional<Relationship> getRelationshipTypeUpdate(Neo4jAl neo4jAl, String start, String end , String weight)
+	public static Optional<Relationship> getRelationshipTypeUpdate(Neo4jAl neo4jAl, String start, String end , Double weight)
 			throws Neo4jQueryException {
-		String req = String.format("MATCH (a : `%s` {`%s` : '%s'})-[r:`%s`]->(b:`%s` {`%s` : '%s'}) SET r.`%s` = '%s' "  +
+		String req = String.format("MATCH (a : `%s` {`%s` : '%s'})-[r:`%s`]->(b:`%s` {`%s` : '%s'}) SET r.`%s` = %f "  +
 				"RETURN r as relationship", NODE_LABELS, NODE_PROP_TYPE, start, RELATIONSHIP_PROP_TYPE,
 				 NODE_LABELS, NODE_PROP_TYPE,end,
 				 RELATIONSHIP_PROP_VALUE, weight);
@@ -324,10 +324,10 @@ public class Neo4jAlUtils {
 	 * @param weight 
 	 * @return
 	 */
-	public static Relationship createRelationshipWeight(Neo4jAl neo4jAl, String start, String end, String weight) throws Neo4jQueryException {
+	public static Relationship createRelationshipWeight(Neo4jAl neo4jAl, String start, String end, Double weight) throws Neo4jQueryException {
 		// Create the relationship
 		String req = String.format("MATCH (a : `%s` {`%s` : '%s'}), (b:`%s` {`%s` : '%s'})" +
-				"MERGE (a)-[r:`%s`{`%s`: '%s'}]->(b) " +
+				"MERGE (a)-[r:`%s`{`%s`: %f}]->(b) " +
 				"RETURN r as relationship ", NODE_LABELS, NODE_PROP_TYPE, start, NODE_LABELS, NODE_PROP_TYPE,
 				end, RELATIONSHIP_PROP_TYPE, RELATIONSHIP_PROP_VALUE, weight );
 

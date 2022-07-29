@@ -54,10 +54,10 @@ public class AlgoProcedure {
              communityAlgorithms louvain = new communityAlgorithms(neo4jAl);
              communityAlgorithms.louvainAlgo(neo4jAl, nodeLabel, relsLabel);
              //return Stream.of(new algoOutput(louvain));
-             return Stream.of(new OutputMessage("Set new properties successfully"));
+             return Stream.of(new OutputMessage("Create new nodes under 'Community' successfully"));
          } catch (Exception e) {
-             log.error("Failed to export the list of label.", e);
-             throw new ProcedureException("Failed to export the list of node. Check Neo4J logs for more details...", e);
+             log.error("Failed to create nodes under 'Community'.", e);
+             throw new ProcedureException("Failed to create nodes. Check Neo4J logs for more details...", e);
          }
      }
 
@@ -83,10 +83,10 @@ public class AlgoProcedure {
              communityAlgorithms labelProp = new communityAlgorithms(neo4jAl);
              communityAlgorithms.labelProp(neo4jAl, nodeLabel, relsLabel);
              //return Stream.of(new algoOutput(louvain));
-             return Stream.of(new OutputMessage("Set new properties successfully"));
+             return Stream.of(new OutputMessage("Create new nodes under 'Community' successfully"));
          } catch (Exception e) {
-             log.error("Failed to export the list of label.", e);
-             throw new ProcedureException("Failed to export the list of node. Check Neo4J logs for more details...", e);
+             log.error("Failed to create nodes under 'Community'.", e);
+             throw new ProcedureException("Failed to create nodes. Check Neo4J logs for more details...", e);
          }
      }
 
@@ -112,10 +112,10 @@ public class AlgoProcedure {
              Neo4jAl neo4jAl = new Neo4jAl(db, transaction, log);
              communityAlgorithms weaklyAlgo= new communityAlgorithms(neo4jAl);
              communityAlgorithms.weaklyAlgo(neo4jAl, nodeLabel, relsLabel);
-             return Stream.of(new OutputMessage("Set new properties successfully"));
+             return Stream.of(new OutputMessage("Create new nodes under 'Community' successfully"));
          } catch (Exception e) {
-             log.error("Failed to export the list of label.", e);
-             throw new ProcedureException("Failed to export the list of node. Check Neo4J logs for more details...", e);
+             log.error("Failed to create nodes under 'Community'.", e);
+             throw new ProcedureException("Failed to create nodes. Check Neo4J logs for more details...", e);
          }
      }
 
@@ -141,10 +141,10 @@ public class AlgoProcedure {
             Neo4jAl neo4jAl = new Neo4jAl(db, transaction, log);
             communityAlgorithms weightLabelProp= new communityAlgorithms(neo4jAl);
             communityAlgorithms. weightLabelProp(neo4jAl, nodeLabel, relsLabel);
-            return Stream.of(new OutputMessage("Set new properties successfully"));
+            return Stream.of(new OutputMessage("Create new nodes under 'Community' successfully"));
         } catch (Exception e) {
-            log.error("Failed to export the list of label.", e);
-            throw new ProcedureException("Failed to export the list of node. Check Neo4J logs for more details...", e);
+            log.error("Failed to create nodes under 'Community'.", e);
+            throw new ProcedureException("Failed to create nodes. Check Neo4J logs for more details...", e);
         }
     }
 

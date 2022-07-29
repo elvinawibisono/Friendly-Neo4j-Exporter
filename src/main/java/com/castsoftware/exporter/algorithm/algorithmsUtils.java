@@ -489,9 +489,9 @@ public class algorithmsUtils {
 
     public static Relationship newRels(Neo4jAl neo4jAl, String node_label, String start, String end) throws Neo4jQueryException{
         // Create the relationship
-    String req = String.format("MATCH (a : `%s` {name : '%s'}), (b:`%s` {name : '%s'})" +
+    String req = String.format("MATCH (a : `Community` {name : '%s'}), (b:`Community` {name : '%s'})" +
     "MERGE (a)-[r: `CONNECT`]->(b) " +
-    "RETURN r as relationship ", node_label,start,node_label,end );
+    "RETURN r as relationship ", start,end );
 
     neo4jAl.info(req); 
 
@@ -577,28 +577,47 @@ public class algorithmsUtils {
 
 
 
-    /* 
+    
 
-    public List<String> deleteGraph(Neo4jAl neo4jAl, String node_label, String rels_label){
+//    public static List<String> deleteGraph(Neo4jAl neo4jAl, String node_label, String rels_label){
 
-        String graphName = graphName(neo4jAl, node_label, rels_label); 
+//         String graphName = graphName(neo4jAl, node_label, rels_label); 
 
-        String req = String.format("CALL gds.graph.drop('%s')", graphName); 
+//         String req = String.format("CALL gds.graph.drop('%s')", graphName); 
 
-        try {
-			Result result = neo4jAl.executeQuery(req);
-			neo4jAl.info(String.format("result : [%s] ", result));
-			if(!result.hasNext()) return new ArrayList<>();
-			else return (List<String>) result.next(); 
-		} catch (Neo4jQueryException e) {
-			neo4jAl.error(String.format("Failed to get the nodes " ), e);
-			throw new Error("Failed to get label's keys");
-		}
+//         try { 
+// 			Result result = neo4jAl.executeQuery(req);
+// 			neo4jAl.info(String.format("result : [%s] ", result));
+// 			return (List<String>) result.next(); 
+
+// 		} catch (Neo4jQueryException e) {
+// 			neo4jAl.error(String.format("Failed to get the nodes " ), e);
+// 			throw new Error("Failed to get label's keys");
+// 		}
 
 
-    }
+//     }
 
-    */ 
+//     public static List<String> deleteNodes(Neo4jAl neo4jAl,String node_label, String rels_label){
+
+//         String graphName = graphName(neo4jAl, node_label, rels_label); 
+
+//         String req = String.format("MATCH (n:Community) DETACH DELETE n"); 
+
+//         try {
+// 			Result result = neo4jAl.executeQuery(req);
+// 			neo4jAl.info(String.format("result : [%s] ", result));
+// 			return (List<String>) result.next(); 
+
+// 		} catch (Neo4jQueryException e) {
+// 			neo4jAl.error(String.format("Failed to get the nodes " ), e);
+// 			throw new Error("Failed to get label's keys");
+// 		}
+
+
+//     }
+
+    
 
 
     
