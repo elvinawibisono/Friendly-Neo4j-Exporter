@@ -27,7 +27,7 @@ import javax.print.attribute.standard.MediaSize.Other;
 
 import java.util.Optional;
 
-public class communityAlgorithms {
+public class CommunityAlgorithms {
 
     private Neo4jAl neo4jAl;
 
@@ -40,9 +40,9 @@ public class communityAlgorithms {
      */
     public static void louvainAlgo(Neo4jAl neo4jAl, String node_label, String rels_label) throws Neo4jQueryException{
 
-       // List<String> delete = algorithmsUtils.deleteGraph(neo4jAl, node_label,rels_label); 
+       // List<String> delete = AlgorithmsUtils.deleteGraph(neo4jAl, node_label,rels_label); 
 
-        Map<String,String> louvain = algorithmsUtils.louvainAlgo(neo4jAl, node_label, rels_label);
+        Map<String,String> louvain = AlgorithmsUtils.louvainAlgo(neo4jAl, node_label, rels_label);
 
         processOutput(neo4jAl,louvain, node_label,rels_label);
 
@@ -57,7 +57,7 @@ public class communityAlgorithms {
      */
     public static void labelProp(Neo4jAl neo4jAl, String node_label, String rels_label) throws Neo4jQueryException{
 
-        Map<String,String> labelProp= algorithmsUtils.labelPropAlgo(neo4jAl, node_label, rels_label);
+        Map<String,String> labelProp= AlgorithmsUtils.labelPropAlgo(neo4jAl, node_label, rels_label);
 
         processOutput(neo4jAl,labelProp, node_label, rels_label);
 
@@ -72,7 +72,7 @@ public class communityAlgorithms {
      */
     public static void weaklyAlgo(Neo4jAl neo4jAl, String node_label, String rels_label) throws Neo4jQueryException{
 
-        Map<String,String> weaklyAlgo= algorithmsUtils.weaklyConnected(neo4jAl, node_label, rels_label);
+        Map<String,String> weaklyAlgo= AlgorithmsUtils.weaklyConnected(neo4jAl, node_label, rels_label);
 
         processOutput(neo4jAl,weaklyAlgo, node_label,rels_label);
 
@@ -87,7 +87,7 @@ public class communityAlgorithms {
      */
     public static void weightLabelProp(Neo4jAl neo4jAl, String node_label, String rels_label) throws Neo4jQueryException{
 
-        Map<String, String> weightLabelProp = algorithmsUtils.weightLabelProp(neo4jAl, node_label, rels_label); 
+        Map<String, String> weightLabelProp = AlgorithmsUtils.weightLabelProp(neo4jAl, node_label, rels_label); 
         processOutput(neo4jAl, weightLabelProp, node_label,rels_label);
 
     }
@@ -143,7 +143,7 @@ public class communityAlgorithms {
             neo4jAl.info(idOut); 
 
             //set the properties of the nodes 
-            newPropValue = algorithmsUtils.setProp(neo4jAl, node_label, nameOut, idOut);
+            newPropValue = AlgorithmsUtils.setProp(neo4jAl, node_label, nameOut, idOut);
             
             //returning a list of comId without repeated values 
             if(!id.contains(idOut)){
@@ -160,18 +160,14 @@ public class communityAlgorithms {
 
         for(int i = 0; i<id.size(); i++){
 
-            List<String>nameId = algorithmsUtils.nodeName(neo4jAl, node_label, id.get(i));
-           // List<String>nameId2 = algorithmsUtils.nodeName(neo4jAl, node_label, id.get(j)); 
+            List<String>nameId = AlgorithmsUtils.nodeName(neo4jAl, node_label, id.get(i));
+      
             neo4jAl.info(nameId.toString()); 
             output.put(id.get(i), nameId);
             neo4jAl.info(output.get(id.get(i)).toString());
             neo4jAl.info(id.get(i));
             neo4jAl.info("line"); 
             neo4jAl.output(output);
-
-          // createNodeRels(neo4jAl,nameId, id.get(i));
-
-           //compareName(neo4jAl, node_label, rels_label, id);
 
            createNodeRels(neo4jAl, nameId, id.get(i));
 
@@ -186,10 +182,17 @@ public class communityAlgorithms {
 
 
     }
-
+    
+    /**
+     * 
+     * @param neo4jAl
+     * @param nameId
+     * @param idIndex
+     * @throws Neo4jQueryException
+     */
     private static void createNodeRels(Neo4jAl neo4jAl,List<String>nameId, String idIndex) throws Neo4jQueryException{
         
-        Optional<Node> nodeOptional = algorithmsUtils.createNode(neo4jAl, idIndex);           
+        Optional<Node> nodeOptional = AlgorithmsUtils.createNode(neo4jAl, idIndex);           
         Node n = nodeOptional.get(); 
 
         List<String>nameValue = new ArrayList<>(); 
@@ -200,63 +203,45 @@ public class communityAlgorithms {
             nameValue.add(nameId.get(j)); 
             String sName = String.join(",",nameValue); 
 
-            Optional<Node> createNode = algorithmsUtils.createNode(neo4jAl,sName);           
+            Optional<Node> createNode = AlgorithmsUtils.createNode(neo4jAl,sName);           
             Node n1= createNode.get(); 
 
-            Relationship r = algorithmsUtils.createRels(neo4jAl, sName , idIndex); 
+            Relationship r = AlgorithmsUtils.createRels(neo4jAl, sName , idIndex); 
 
         }
 
 
     }
-
+   
+    /**
+     * 
+     * @param neo4jAl
+     * @param node_label
+     * @param rels_label
+     * @param id
+     * @param output
+     * @throws Neo4jQueryException
+     */
     private static void compareName(Neo4jAl neo4jAl, String node_label, String rels_label, List<String> id, Map<String, List<String>> output) throws Neo4jQueryException{
 
-        // List<String> outputKey= new ArrayList<>(); 
-
-        // for(String key: output.keySet()){
-         
-        //    outputKey.add(key);
-
-        //    neo4jAl.info (outputKey.toString()); 
-        // }
-
+    
          List<String> firstComp = new ArrayList<>(); 
          List<String> secondComp = new ArrayList<>(); 
 
-        // String firstComp = new String(); 
-        // String secondComp = new String(); 
-        
 
         for(int i = 0 ; i<id.size(); i++){
 
-           // firstComp = new ArrayList<>(); 
-
             neo4jAl.info(id.get(i)); 
             firstComp = output.get(id.get(i));
-          //  firstComp =output.get(id.get(i)).toString();
-
+       
             neo4jAl.info(firstComp.toString()); 
 
             for (int j =i+1; j<id.size(); j++){
 
-                //secondComp = new ArrayList<>(); 
                 neo4jAl.info(id.get(j)); 
                 secondComp = output.get(id.get(j));
-
-                //secondComp = output.get(id.get(j)).toString();
-
                 neo4jAl.info(secondComp.toString()); 
 
-                neo4jAl.info("yuh"); 
-
-                // List<String>list1 = Arrays.asList(firstComp);
-                // List<String>list2 = Arrays.asList(secondComp);
-
-                // neo4jAl.info(String.format("l1 : %s", list1));
-                // neo4jAl.info(String.format("L2 : %s", list2));
-
-               
                 Relationship rels; 
                 
                 for (int k = 0 ; k<firstComp.size(); k++){
@@ -267,12 +252,12 @@ public class communityAlgorithms {
                         neo4jAl.info(secondComp.get(l)); 
 
 
-                        Optional<Relationship>findRels = algorithmsUtils.findRelationship(neo4jAl,node_label, rels_label, firstComp.get(k), secondComp.get(l)); 
+                        Optional<Relationship>findRels = AlgorithmsUtils.findRelationship(neo4jAl,node_label, rels_label, firstComp.get(k), secondComp.get(l)); 
                         
                         if(findRels.isPresent()){
                            
 
-                            rels = algorithmsUtils.newRels(neo4jAl, node_label, id.get(i), id.get(j));
+                            rels = AlgorithmsUtils.newRels(neo4jAl, node_label, id.get(i), id.get(j));
                             
                         }
                             
@@ -296,12 +281,12 @@ public class communityAlgorithms {
                         
 
 
-                        Optional<Relationship>findRels2 = algorithmsUtils.findRelationship(neo4jAl,node_label, rels_label,secondComp.get(k), firstComp.get(l)); 
+                        Optional<Relationship>findRels2 = AlgorithmsUtils.findRelationship(neo4jAl,node_label, rels_label,secondComp.get(k), firstComp.get(l)); 
                         
                         if(findRels2.isPresent()){
                            
 
-                            rels2 = algorithmsUtils.newRels(neo4jAl, node_label, id.get(i), id.get(j));
+                            rels2 = AlgorithmsUtils.newRels(neo4jAl, node_label, id.get(i), id.get(j));
                             
                         }
                             
@@ -327,56 +312,15 @@ public class communityAlgorithms {
         neo4jAl.info(secondComp.toString()); 
 
 
-
-
-        // List<String>getName = algorithmsUtils.getName(neo4jAl, node_label); 
-
-        // Relationship r; 
-
-        // for(int i = 0; i<getName.size(); i++ ){
-
-        //     for (int j = 0; i<getName.size(); j++){
-
-        //         Optional<Relationship>findRels = algorithmsUtils.findRelationship(neo4jAl,node_label, rels_label, getName.get(i), getName.get(j)); 
-
-        //         if(findRels.isPresent()){
-
-        //             for(int k = 0; i<id.size(); i++){
-
-        //                 for(int l = 0 ; i<id.size(); l++){
-
-        //                     r = algorithmsUtils.newRels(neo4jAl, node_label, id.get(k), id.get(l)); 
-
-        //                 }
-
-        //             }
-                   
-        //         }
-        //     }
-        // }
-
     }
     
-    /* 
-    public static List<String>weaklyconnected(){
-
-    }
-
-
-    //louvain algorithm 
-
-    //label propagation 
-
-    //weakly connected components 
-
-    */ 
-
 
     /**
 	 * Exporter
 	 * @param neo4jAl
 	 */
-	public communityAlgorithms(Neo4jAl neo4jAl) {
+	public CommunityAlgorithms(Neo4jAl neo4jAl) {
+
 		this.neo4jAl = neo4jAl;
 	}
 

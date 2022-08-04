@@ -1,7 +1,7 @@
 package com.castsoftware.exporter.procedures;
 
-import com.castsoftware.exporter.algorithm.algorithmsUtils;
-import com.castsoftware.exporter.algorithm.communityAlgorithms;
+import com.castsoftware.exporter.algorithm.CommunityAlgorithms;
+import com.castsoftware.exporter.algorithm.AlgorithmsUtils;
 import com.castsoftware.exporter.database.Neo4jAl;
 import com.castsoftware.exporter.exceptions.ProcedureException;
 import com.castsoftware.exporter.exceptions.file.FileIOException;
@@ -51,8 +51,8 @@ public class AlgoProcedure {
                                                 ) throws ProcedureException{
          try {
              Neo4jAl neo4jAl = new Neo4jAl(db, transaction, log);
-             communityAlgorithms louvain = new communityAlgorithms(neo4jAl);
-             communityAlgorithms.louvainAlgo(neo4jAl, nodeLabel, relsLabel);
+             CommunityAlgorithms louvain = new CommunityAlgorithms(neo4jAl);
+             CommunityAlgorithms.louvainAlgo(neo4jAl, nodeLabel, relsLabel);
              //return Stream.of(new algoOutput(louvain));
              return Stream.of(new OutputMessage("Create new nodes under 'Community' successfully"));
          } catch (Exception e) {
@@ -80,8 +80,8 @@ public class AlgoProcedure {
                                                 ) throws ProcedureException{
          try {
              Neo4jAl neo4jAl = new Neo4jAl(db, transaction, log);
-             communityAlgorithms labelProp = new communityAlgorithms(neo4jAl);
-             communityAlgorithms.labelProp(neo4jAl, nodeLabel, relsLabel);
+             CommunityAlgorithms labelProp = new CommunityAlgorithms(neo4jAl);
+             CommunityAlgorithms.labelProp(neo4jAl, nodeLabel, relsLabel);
              //return Stream.of(new algoOutput(louvain));
              return Stream.of(new OutputMessage("Create new nodes under 'Community' successfully"));
          } catch (Exception e) {
@@ -110,8 +110,8 @@ public class AlgoProcedure {
                                                 ) throws ProcedureException{
          try {
              Neo4jAl neo4jAl = new Neo4jAl(db, transaction, log);
-             communityAlgorithms weaklyAlgo= new communityAlgorithms(neo4jAl);
-             communityAlgorithms.weaklyAlgo(neo4jAl, nodeLabel, relsLabel);
+             CommunityAlgorithms weaklyAlgo= new CommunityAlgorithms(neo4jAl);
+             CommunityAlgorithms.weaklyAlgo(neo4jAl, nodeLabel, relsLabel);
              return Stream.of(new OutputMessage("Create new nodes under 'Community' successfully"));
          } catch (Exception e) {
              log.error("Failed to create nodes under 'Community'.", e);
@@ -139,8 +139,8 @@ public class AlgoProcedure {
                                                ) throws ProcedureException{
         try {
             Neo4jAl neo4jAl = new Neo4jAl(db, transaction, log);
-            communityAlgorithms weightLabelProp= new communityAlgorithms(neo4jAl);
-            communityAlgorithms. weightLabelProp(neo4jAl, nodeLabel, relsLabel);
+            CommunityAlgorithms weightLabelProp= new CommunityAlgorithms(neo4jAl);
+            CommunityAlgorithms. weightLabelProp(neo4jAl, nodeLabel, relsLabel);
             return Stream.of(new OutputMessage("Create new nodes under 'Community' successfully"));
         } catch (Exception e) {
             log.error("Failed to create nodes under 'Community'.", e);
